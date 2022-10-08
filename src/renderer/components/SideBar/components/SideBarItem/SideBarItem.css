@@ -1,0 +1,22 @@
+.sidebar-item {
+  padding: 15px;
+  border-top: 1px solid #ffffff09;
+  border-bottom: 1px solid #ffffff09;
+  background-color: #ffffff04;
+  cursor: pointer;
+  transition: all .2s;
+  letter-spacing: 0.04em;
+}
+
+.sidebar-item:not(.active):hover {
+  opacity: .3;
+}
+
+.sidebar-item:not(.active):active {
+  opacity: 1;
+}
+
+.sidebar-item.active {
+  background-color: #fff;
+  color: #303030;
+}

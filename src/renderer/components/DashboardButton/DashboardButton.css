@@ -1,0 +1,37 @@
+.dashboard-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
+  border: none;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  padding: 15px 15px;
+  align-self: flex-start;
+  cursor: pointer;
+  color: #0277bd;
+  transition: all .2s;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  width: 150px;
+  height: 150px;
+  text-align: center;
+  flex-direction: column;
+}
+
+.dashboard-btn > svg {
+  font-size: 54pt;
+}
+
+.dashboard-btn:hover {
+  opacity: .7;
+}
+
+.dashboard-btn:active {
+  opacity: 1;
+}
+
+.dashboard-btn > span {
+  font-size: 11pt;
+  font-weight: 300;
+}
