@@ -15,7 +15,6 @@
     "link-modules": "node -r ts-node/register ../../.erb/scripts/link-modules.ts"
   },
   "dependencies": {
-    "playwright-core": "^1.27.0",
     "playwright-firefox": "^1.26.1"
   }
 }
