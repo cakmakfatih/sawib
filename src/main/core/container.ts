@@ -1,10 +1,15 @@
-import { container, Lifecycle } from "tsyringe";
-import moment from "moment";
-import * as log4js from "log4js";
-import path from "path";
-import * as Sentry from "@sentry/node";
-import Logger from "./Logger";
-import Tokens from "./bin/Tokens";
+import { container, Lifecycle } from 'tsyringe';
+import moment from 'moment';
+import * as log4js from 'log4js';
+import path from 'path';
+import * as Sentry from '@sentry/node';
+import Logger from './Logger';
+import Tokens from '../bin/Tokens';
+import { firefox, Browser, BrowserType } from 'playwright-firefox';
+import BrowserRepository from '../features/browser/domain/repositories/BrowserRepository';
+import BrowserRepositoryImpl from '../features/browser/data/repositories/BrowserRepositoryImpl';
+import bindDependencies from './utils/bindDependencies';
+import { ILaunchBrowser, LaunchBrowser } from '../features/browser/domain/usecases/LaunchBrowser';
 
 export function initSentry() {
   if (typeof process.env.SENTRY_DSN_URL !== "undefined")
@@ -14,7 +19,22 @@ export function initSentry() {
     });
 }
 
-function initExternal() {
+export function initBrowser() {
+  //! firefox
+  container.registerInstance<BrowserType<Browser>>(Tokens.firefox, firefox);
+
+  //! repositories
+  container.register<BrowserRepository>(Tokens.browserRepository, {
+    useClass: BrowserRepositoryImpl,
+  }, { lifecycle: Lifecycle.Singleton });
+
+  //! usecases
+  container.register<ILaunchBrowser>(Tokens.launchBrowser, {
+    useValue: bindDependencies(Tokens.browserRepository, LaunchBrowser)
+  });
+}
+
+export function initExternal() {
   //! sentry
   initSentry();
 

@@ -21,8 +21,9 @@
     "resolveJsonModule": true,
     "allowJs": true,
     "outDir": "release/app/dist",
-    "types": ["reflect-metadata", "node", "mocha"],
-    "experimentalDecorators": true
+    "types": ["reflect-metadata", "node", "jest"],
+    "experimentalDecorators": true,
+    "strictPropertyInitialization": false
   },
-  "exclude": ["test", "release/build", "release/app/dist", ".erb/dll"]
+  "exclude": ["release/build", "release/app/dist", ".erb/dll"]
 }
