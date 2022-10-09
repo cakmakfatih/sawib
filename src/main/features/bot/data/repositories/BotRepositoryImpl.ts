@@ -12,7 +12,6 @@ import StealthBrowser from '../../../../features/browser/domain/entities/Stealth
 @injectable()
 class BotRepositoryImpl implements BotRepository {
   private readonly logger: Logger;
-
   private readonly newPage: INewPage;
 
   constructor(
