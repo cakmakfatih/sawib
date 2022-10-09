@@ -69,7 +69,7 @@
     "setupFiles": [
       "./.erb/scripts/check-build-exists.ts"
     ],
-    "testEnvironment": "jsdom",
+    "testEnvironment": "node",
     "testEnvironmentOptions": {
       "url": "http://localhost/"
     },
@@ -78,6 +78,11 @@
     ],
     "transform": {
       "\\.(ts|tsx|js|jsx)$": "ts-jest"
+    },
+    "globals": {
+      "ts-jest": {
+        "isolatedModules": true
+      }
     }
   },
   "dependencies": {

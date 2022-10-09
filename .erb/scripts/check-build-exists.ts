@@ -1,4 +1,5 @@
 // Check if the renderer and main bundles are built
+import 'reflect-metadata';
 import path from 'path';
 import chalk from 'chalk';
 import fs from 'fs';

@@ -4,7 +4,7 @@ import StealthBrowser from "../entities/StealthBrowser";
 import { LaunchBrowserParams } from "../usecases/LaunchBrowser";
 
 interface BrowserRepository {
-    launch(params?: LaunchBrowserParams): Promise<Either<Failure, StealthBrowser>>;
+  launch(params?: LaunchBrowserParams): Promise<Either<Failure, StealthBrowser>>;
 }
 
 export default BrowserRepository;

@@ -27,4 +27,9 @@ module.exports = {
       '@typescript-eslint/parser': ['.ts', '.tsx'],
     },
   },
+  overrides: {
+    rules: {
+      "jest/valid-expect": 0
+    }
+  }
 };
