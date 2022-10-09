@@ -1,5 +1,5 @@
 import { Either } from '@typed-f/either';
-import { Failure } from 'main/core/error/failures';
+import { Failure } from '../../../../core/error/failures';
 import StealthBrowser from '../entities/StealthBrowser';
 import { LaunchBrowserParams } from '../usecases/LaunchBrowser';
 import { NewPageParams } from '../usecases/NewPage';
