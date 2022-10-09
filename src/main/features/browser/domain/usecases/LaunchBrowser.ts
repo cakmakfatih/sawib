@@ -7,15 +7,15 @@ import BrowserRepository from "../repositories/BrowserRepository";
 type LaunchBrowserParams = StealthBrowserLaunchOptions;
 
 interface ILaunchBrowser {
-    (params?: LaunchBrowserParams): Promise<Either<Failure, StealthBrowser>>;
+  (params?: LaunchBrowserParams): Promise<Either<Failure, StealthBrowser>>;
 }
 
 async function LaunchBrowser(repository: BrowserRepository, params?: LaunchBrowserParams): Promise<Either<Failure, StealthBrowser>> {
-    return await repository.launch(params);
+  return await repository.launch(params);
 }
 
 export {
-    LaunchBrowserParams,
-    ILaunchBrowser,
-    LaunchBrowser,
+  LaunchBrowserParams,
+  ILaunchBrowser,
+  LaunchBrowser,
 };
