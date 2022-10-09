@@ -6,6 +6,8 @@ import BrowserRepositoryImpl from '../../../../../../main/features/browser/data/
 import StealthBrowser from '../../../../../../main/features/browser/domain/entities/StealthBrowser';
 import { Left, Right } from '@typed-f/either';
 import { BrowserFailure } from '../../../../../../main/core/error/failures';
+import { DEFAULT_ABOUT_CONFIG, DEFAULT_LAUNCH_OPTIONS } from '../../../../../../main/features/browser/bin/config';
+import StealthBrowserLaunchOptions from 'main/features/browser/domain/entities/StealthBrowserLaunchOptions';
 
 const mockFirefox = stubInterface<BrowserType<Browser>>();
 const mockContext = stubInterface<BrowserContext>();
@@ -33,6 +35,10 @@ describe("BrowserRepository", () => {
 
   beforeEach(() => {
     mockLogger.info.resetHistory();
+    mockLogger.warn.resetHistory();
+    mockLogger.error.resetHistory();
+    mockFirefox.launch.resetHistory();
+    mockBrowser.close.resetHistory();
     createContextStub.resetHistory();
   });
 
@@ -76,7 +82,6 @@ describe("BrowserRepository", () => {
       ok(createContextStub.calledOnceWith(mockBrowser));
     });
 
-
     it("should handle errors and log correctly if [browser.launch] rejects", async () => {
       // arrange
       const errMessage = "test error";
@@ -88,8 +93,66 @@ describe("BrowserRepository", () => {
       const result = await repository.launch();
 
       // assert
-      deepEqual(result, new Left(new BrowserFailure(failureMessage, err)));
       ok(mockLogger.warn.calledOnceWith(failureMessage));
+      ok(mockLogger.error.calledOnceWith(err));
+      deepEqual(result, new Left(new BrowserFailure(failureMessage, err)));
+    });
+
+    it("should call [browser.launch] with [DEFAULT_LAUNCH_OPTIONS] if no params given", async () => {
+      // act
+      await repository.launch();
+
+      // assert
+      ok(mockFirefox.launch.calledOnceWith({ ...DEFAULT_LAUNCH_OPTIONS, firefoxUserPrefs: DEFAULT_ABOUT_CONFIG }));
+    });
+
+    it("should call [browser.launch] with correct params if any given", async () => {
+      // arrange
+      const params: StealthBrowserLaunchOptions = {
+        headless: false,
+      };
+
+      // act
+      await repository.launch(params);
+
+      // assert
+      ok(mockFirefox.launch.calledOnceWith({ ...DEFAULT_LAUNCH_OPTIONS, ...params, firefoxUserPrefs: DEFAULT_ABOUT_CONFIG }));
+    });
+
+    it("should add additional firefoxUserPrefs settings if passed with params", async () => {
+      // arrange
+      const params: StealthBrowserLaunchOptions = {
+        headless: false,
+        firefoxUserPrefs: {
+          "test-pref": true,
+        },
+      };
+
+      // act
+      await repository.launch(params);
+
+      // assert
+      ok(mockFirefox.launch.calledOnceWith({ ...DEFAULT_LAUNCH_OPTIONS, ...params, firefoxUserPrefs: { ...DEFAULT_ABOUT_CONFIG, ...params.firefoxUserPrefs } }));
+    });
+
+    it("should handle errors and log correctly if [Repository.createContext] rejects and call [browser.close]", async () => {
+      // arrange
+      const errMessage = "test error";
+      const err = new Error(errMessage);
+      const failureMessage = "Failed while creating a context.";
+
+      mockBrowser.close.resolves();
+      mockFirefox.launch.resolves(mockBrowser);
+      createContextStub.rejects(err);
+
+      // act
+      const result = await repository.launch();
+
+      // assert
+      ok(mockLogger.warn.calledOnceWith(failureMessage));
+      ok(mockLogger.error.calledOnceWith(err));
+      ok(mockBrowser.close.calledOnceWith());
+      deepEqual(result, new Left(new BrowserFailure(failureMessage, err)));
     });
   });
 });

@@ -4,7 +4,7 @@ import StealthBrowserLaunchOptions from "../domain/entities/StealthBrowserLaunch
 export const LAUNCH_TIMEOUT: number = 60000;
 
 export const DEFAULT_LAUNCH_OPTIONS: StealthBrowserLaunchOptions = {
-  headless: process.env.NODE_ENV === "prod",
+  headless: true,
   timeout: LAUNCH_TIMEOUT,
   ignoreDefaultArgs: ['--hide-scrollbars', '--mute-audio'],
 };

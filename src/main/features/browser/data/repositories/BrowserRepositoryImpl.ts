@@ -8,8 +8,11 @@ import BrowserRepository from '../../domain/repositories/BrowserRepository';
 import { inject, injectable } from 'tsyringe';
 import { BrowserType, Browser, BrowserContext, FirefoxBrowser } from 'playwright-firefox';
 import safePromise from '../../../../utils/safePromise';
+import { DEFAULT_ABOUT_CONFIG, DEFAULT_LAUNCH_OPTIONS } from '../../bin/config';
+import AboutConfig from '../../domain/entities/AboutConfig';
 
 export const BROWSER_LAUNCH_FAILURE_MESSAGE = "Failed while launching the browser.";
+export const CREATE_CONTEXT_FAILURE_MESSAGE = "Failed while creating a context.";
 
 @injectable()
 class BrowserRepositoryImpl implements BrowserRepository {
@@ -24,20 +27,40 @@ class BrowserRepositoryImpl implements BrowserRepository {
     this.firefox = firefox;
   }
 
-  async launch(params?: StealthBrowserLaunchOptions | undefined): Promise<Either<Failure, StealthBrowser>> {
+  async launch(params?: StealthBrowserLaunchOptions): Promise<Either<Failure, StealthBrowser>> {
     this.logger.info("[BrowserRepository.launch] started.");
 
-    const browserOrFailure = await safePromise<Browser>(() => this.firefox.launch());
+    let aboutConfig: AboutConfig = { ...DEFAULT_ABOUT_CONFIG, ...params?.firefoxUserPrefs };
+
+    if (!params) {
+      params = { ...DEFAULT_LAUNCH_OPTIONS, firefoxUserPrefs: aboutConfig };
+    } else {
+      params = { ...DEFAULT_LAUNCH_OPTIONS, ...params, firefoxUserPrefs: aboutConfig };
+    }
+
+    const browserOrFailure = await safePromise<Browser>(() => this.firefox.launch(params));
 
     if (browserOrFailure.isLeft()) {
       this.logger.warn(BROWSER_LAUNCH_FAILURE_MESSAGE);
+      this.logger.error(browserOrFailure.value);
 
       return new Left(new BrowserFailure(BROWSER_LAUNCH_FAILURE_MESSAGE, browserOrFailure.value));
     }
 
     const browser = browserOrFailure.value;
 
-    const context = await this.createContext(browser);
+    const contextOrFailure = await safePromise<BrowserContext>(() => this.createContext(browser));
+
+    if (contextOrFailure.isLeft()) {
+      await browser.close();
+
+      this.logger.warn(CREATE_CONTEXT_FAILURE_MESSAGE);
+      this.logger.error(contextOrFailure.value);
+
+      return new Left(new BrowserFailure(CREATE_CONTEXT_FAILURE_MESSAGE, contextOrFailure.value));
+    }
+
+    const context = contextOrFailure.value;
 
     const stealthBrowser: StealthBrowser = {
       browser,
