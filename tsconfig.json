@@ -24,5 +24,5 @@
     "types": ["reflect-metadata", "node", "mocha"],
     "experimentalDecorators": true
   },
-  "exclude": ["test", "release/build", "release/app/dist", ".erb/dll"]
+  "exclude": ["tests", "release/build", "release/app/dist", ".erb/dll"]
 }
