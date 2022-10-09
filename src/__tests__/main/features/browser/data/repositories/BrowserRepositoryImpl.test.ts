@@ -1,6 +1,6 @@
 import { deepEqual, equal, ok } from 'assert';
 import { FirefoxBrowser, Browser, BrowserType, BrowserContext } from 'playwright-firefox';
-import sinon, { stubInterface } from 'ts-sinon';
+import { stubInterface } from 'ts-sinon';
 import Logger from '../../../../../../main/core/Logger';
 import BrowserRepositoryImpl from '../../../../../../main/features/browser/data/repositories/BrowserRepositoryImpl';
 import StealthBrowser from '../../../../../../main/features/browser/domain/entities/StealthBrowser';
@@ -19,8 +19,6 @@ const repository = new BrowserRepositoryImpl(
   mockFirefox,
 );
 
-let createContextStub: sinon.SinonStub;
-
 describe("BrowserRepository", () => {
   let successfulResult: StealthBrowser;
 
@@ -29,8 +27,6 @@ describe("BrowserRepository", () => {
       browser: mockBrowser,
       context: mockContext,
     };
-
-    createContextStub = sinon.stub(repository, "createContext");
   });
 
   beforeEach(() => {
@@ -38,8 +34,8 @@ describe("BrowserRepository", () => {
     mockLogger.warn.resetHistory();
     mockLogger.error.resetHistory();
     mockFirefox.launch.resetHistory();
+    mockBrowser.newContext.resetHistory();
     mockBrowser.close.resetHistory();
-    createContextStub.resetHistory();
   });
 
   describe("launch", () => {
@@ -61,7 +57,7 @@ describe("BrowserRepository", () => {
       const expectedResult = new Right(successfulResult);
 
       mockFirefox.launch.resolves(mockBrowser);
-      createContextStub.resolves(mockContext);
+      mockBrowser.newContext.resolves(mockContext);
 
       // act
       const result = await repository.launch();
@@ -79,7 +75,7 @@ describe("BrowserRepository", () => {
       await repository.launch();
 
       // assert
-      ok(createContextStub.calledOnceWith(mockBrowser));
+      ok(mockBrowser.newContext.calledOnceWith());
     });
 
     it("should handle errors and log correctly if [browser.launch] rejects", async () => {
@@ -143,7 +139,7 @@ describe("BrowserRepository", () => {
 
       mockBrowser.close.resolves();
       mockFirefox.launch.resolves(mockBrowser);
-      createContextStub.rejects(err);
+      mockBrowser.newContext.rejects(err);
 
       // act
       const result = await repository.launch();
