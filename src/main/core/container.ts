@@ -10,6 +10,7 @@ import BrowserRepository from '../features/browser/domain/repositories/BrowserRe
 import BrowserRepositoryImpl from '../features/browser/data/repositories/BrowserRepositoryImpl';
 import bindDependencies from './utils/bindDependencies';
 import { ILaunchBrowser, LaunchBrowser } from '../features/browser/domain/usecases/LaunchBrowser';
+import { INewPage, NewPage } from '../features/browser/domain/usecases/NewPage';
 
 export function initSentry() {
   if (typeof process.env.SENTRY_DSN_URL !== "undefined")
@@ -31,6 +32,9 @@ export function initBrowser() {
   //! usecases
   container.register<ILaunchBrowser>(Tokens.launchBrowser, {
     useValue: bindDependencies(Tokens.browserRepository, LaunchBrowser)
+  });
+  container.register<INewPage>(Tokens.newPage, {
+    useValue: bindDependencies(Tokens.browserRepository, NewPage)
   });
 }
 
