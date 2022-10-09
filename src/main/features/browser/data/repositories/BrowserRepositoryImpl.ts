@@ -72,7 +72,7 @@ class BrowserRepositoryImpl implements BrowserRepository {
     return new Right(stealthBrowser);
   }
 
-  async createContext(browser: FirefoxBrowser): Promise<BrowserContext> {
+  private async createContext(browser: FirefoxBrowser): Promise<BrowserContext> {
     return await browser.newContext();
   }
 }
