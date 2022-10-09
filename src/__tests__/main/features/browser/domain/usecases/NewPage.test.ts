@@ -13,7 +13,7 @@ const mockContext: BrowserContext = stubInterface<BrowserContext>();
 const usecase: INewPage = (params: NewPageParams) => NewPage(mockRepository, params);
 
 describe("NewPage", () => {
-  it("should call [BrowserRepository.launch] once with correct params", async () => {
+  it("should call [BrowserRepository.newPage] once with correct params", async () => {
     // arrange
     const params: NewPageParams = mockContext;
 
