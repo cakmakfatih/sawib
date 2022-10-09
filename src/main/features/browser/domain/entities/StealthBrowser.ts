@@ -1,8 +1,8 @@
 import { FirefoxBrowser, BrowserContext } from 'playwright-firefox';
 
-interface SBrowser {
+interface StealthBrowser {
   browser: FirefoxBrowser;
   context: BrowserContext;
 }
 
-export default SBrowser;
+export default StealthBrowser;

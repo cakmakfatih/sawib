@@ -1,10 +1,10 @@
 import { Either } from "@typed-f/either";
 import { Failure } from "main/core/error/failures";
-import SBrowser from "../entities/SBrowser";
+import StealthBrowser from "../entities/StealthBrowser";
 import { LaunchBrowserParams } from "../usecases/LaunchBrowser";
 
 interface BrowserRepository {
-  launch(params?: LaunchBrowserParams): Promise<Either<Failure, SBrowser>>;
+    launch(params?: LaunchBrowserParams): Promise<Either<Failure, StealthBrowser>>;
 }
 
 export default BrowserRepository;
