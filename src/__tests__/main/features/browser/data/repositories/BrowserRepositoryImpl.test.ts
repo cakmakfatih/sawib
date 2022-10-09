@@ -3,8 +3,9 @@ import { FirefoxBrowser, Browser, BrowserType, BrowserContext } from 'playwright
 import sinon, { stubInterface } from 'ts-sinon';
 import Logger from '../../../../../../main/core/Logger';
 import BrowserRepositoryImpl from '../../../../../../main/features/browser/data/repositories/BrowserRepositoryImpl';
-import StealthBrowser from 'main/features/browser/domain/entities/StealthBrowser';
-import { Right } from '@typed-f/either';
+import StealthBrowser from '../../../../../../main/features/browser/domain/entities/StealthBrowser';
+import { Left, Right } from '@typed-f/either';
+import { BrowserFailure } from '../../../../../../main/core/error/failures';
 
 const mockFirefox = stubInterface<BrowserType<Browser>>();
 const mockContext = stubInterface<BrowserContext>();
@@ -73,6 +74,22 @@ describe("BrowserRepository", () => {
 
       // assert
       ok(createContextStub.calledOnceWith(mockBrowser));
+    });
+
+
+    it("should handle errors and log correctly if [browser.launch] rejects", async () => {
+      // arrange
+      const errMessage = "test error";
+      const err = new Error(errMessage);
+      const failureMessage = "Failed while launching the browser.";
+      mockFirefox.launch.rejects(err);
+
+      // act
+      const result = await repository.launch();
+
+      // assert
+      deepEqual(result, new Left(new BrowserFailure(failureMessage, err)));
+      ok(mockLogger.warn.calledOnceWith(failureMessage));
     });
   });
 });

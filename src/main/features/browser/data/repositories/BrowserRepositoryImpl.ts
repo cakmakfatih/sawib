@@ -1,5 +1,5 @@
-import { Either, Right } from '@typed-f/either';
-import { Failure } from '../../../../core/error/failures';
+import { Either, Left, Right } from '@typed-f/either';
+import { BrowserFailure, Failure } from '../../../../core/error/failures';
 import Logger from '../../../../core/Logger';
 import Tokens from '../../../../bin/Tokens';
 import StealthBrowser from '../../domain/entities/StealthBrowser';
@@ -7,6 +7,9 @@ import StealthBrowserLaunchOptions from '../../domain/entities/StealthBrowserLau
 import BrowserRepository from '../../domain/repositories/BrowserRepository';
 import { inject, injectable } from 'tsyringe';
 import { BrowserType, Browser, BrowserContext, FirefoxBrowser } from 'playwright-firefox';
+import safePromise from '../../../../utils/safePromise';
+
+export const BROWSER_LAUNCH_FAILURE_MESSAGE = "Failed while launching the browser.";
 
 @injectable()
 class BrowserRepositoryImpl implements BrowserRepository {
@@ -24,7 +27,16 @@ class BrowserRepositoryImpl implements BrowserRepository {
   async launch(params?: StealthBrowserLaunchOptions | undefined): Promise<Either<Failure, StealthBrowser>> {
     this.logger.info("[BrowserRepository.launch] started.");
 
-    const browser = await this.firefox.launch();
+    const browserOrFailure = await safePromise<Browser>(() => this.firefox.launch());
+
+    if (browserOrFailure.isLeft()) {
+      this.logger.warn(BROWSER_LAUNCH_FAILURE_MESSAGE);
+
+      return new Left(new BrowserFailure(BROWSER_LAUNCH_FAILURE_MESSAGE, browserOrFailure.value));
+    }
+
+    const browser = browserOrFailure.value;
+
     const context = await this.createContext(browser);
 
     const stealthBrowser: StealthBrowser = {
