@@ -1,5 +1,5 @@
 import { deepEqual, equal, ok } from 'assert';
-import { FirefoxBrowser, Browser, BrowserType, BrowserContext } from 'playwright-firefox';
+import { FirefoxBrowser, Browser, BrowserType, BrowserContext, Page } from 'playwright-firefox';
 import { stubInterface } from 'ts-sinon';
 import Logger from '../../../../../../main/core/Logger';
 import BrowserRepositoryImpl from '../../../../../../main/features/browser/data/repositories/BrowserRepositoryImpl';
@@ -11,6 +11,7 @@ import StealthBrowserLaunchOptions from 'main/features/browser/domain/entities/S
 
 const mockFirefox = stubInterface<BrowserType<Browser>>();
 const mockContext = stubInterface<BrowserContext>();
+const mockPage = stubInterface<Page>();
 const mockBrowser = stubInterface<FirefoxBrowser>();
 const mockLogger = stubInterface<Logger>();
 
@@ -66,7 +67,7 @@ describe("BrowserRepository", () => {
       deepEqual(result, expectedResult);
     });
 
-    it("should call [repository.createContext] with correct params", async () => {
+    it("should call [browser.newContext] with correct params", async () => {
       // arrange
       mockFirefox.launch.resolves(mockBrowser);
       mockBrowser.newContext.resolves(mockContext);
@@ -153,8 +154,17 @@ describe("BrowserRepository", () => {
   });
 
   describe("newPage", () => {
+    let successfulResult: Page;
+
+    beforeAll(() => {
+      successfulResult = mockPage;
+    });
+
     beforeEach(() => {
       mockLogger.info.resetHistory();
+      mockLogger.warn.resetHistory();
+      mockLogger.error.resetHistory();
+      mockContext.newPage.resetHistory();
     });
 
     it("should call [Logger.info] correctly", async () => {
@@ -165,6 +175,42 @@ describe("BrowserRepository", () => {
       ok(mockLogger.info.calledWith("[BrowserRepository.newPage] started."));
       ok(mockLogger.info.calledWith("[BrowserRepository.newPage] completed."));
       equal(mockLogger.info.callCount, 2);
+    });
+
+    it("should return [Page] if doesn't run into any errors", async () => {
+      // arrange
+      const expectedResult = new Right(successfulResult);
+      mockContext.newPage.resolves(mockPage);
+
+      // act
+      const result = await repository.newPage(mockContext);
+
+      // assert
+      deepEqual(result, expectedResult);
+    });
+
+    it("should call [context.newPage] once", async () => {
+      // act
+      await repository.newPage(mockContext);
+
+      // assert
+      ok(mockContext.newPage.calledOnceWith());
+    });
+
+    it("should handle errors and log correctly if [context.newPage] rejects", async () => {
+      // arrange
+      const errMessage = "test error";
+      const err = new Error(errMessage);
+      const failureMessage = "Failed while creating a new page from given context.";
+      mockContext.newPage.rejects(err);
+
+      // act
+      const result = await repository.newPage(mockContext);
+
+      // assert
+      ok(mockLogger.warn.calledOnceWith(failureMessage));
+      ok(mockLogger.error.calledOnceWith(err));
+      deepEqual(result, new Left(new BrowserFailure(failureMessage, err)));
     });
   });
 });
