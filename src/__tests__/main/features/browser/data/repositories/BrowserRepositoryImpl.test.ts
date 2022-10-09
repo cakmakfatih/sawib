@@ -151,4 +151,20 @@ describe("BrowserRepository", () => {
       deepEqual(result, new Left(new BrowserFailure(failureMessage, err)));
     });
   });
+
+  describe("newPage", () => {
+    beforeEach(() => {
+      mockLogger.info.resetHistory();
+    });
+
+    it("should call [Logger.info] correctly", async () => {
+      // act
+      await repository.newPage(mockContext);
+
+      // assert
+      ok(mockLogger.info.calledWith("[BrowserRepository.newPage] started."));
+      ok(mockLogger.info.calledWith("[BrowserRepository.newPage] completed."));
+      equal(mockLogger.info.callCount, 2);
+    });
+  });
 });

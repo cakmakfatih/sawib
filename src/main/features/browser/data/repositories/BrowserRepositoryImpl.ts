@@ -6,7 +6,7 @@ import StealthBrowser from '../../domain/entities/StealthBrowser';
 import StealthBrowserLaunchOptions from '../../domain/entities/StealthBrowserLaunchOptions';
 import BrowserRepository from '../../domain/repositories/BrowserRepository';
 import { inject, injectable } from 'tsyringe';
-import { BrowserType, Browser, BrowserContext, FirefoxBrowser } from 'playwright-firefox';
+import { BrowserType, Browser, BrowserContext, FirefoxBrowser, Page } from 'playwright-firefox';
 import safePromise from '../../../../utils/safePromise';
 import { DEFAULT_ABOUT_CONFIG, DEFAULT_LAUNCH_OPTIONS } from '../../bin/config';
 import AboutConfig from '../../domain/entities/AboutConfig';
@@ -74,6 +74,14 @@ class BrowserRepositoryImpl implements BrowserRepository {
 
   private async createContext(browser: FirefoxBrowser): Promise<BrowserContext> {
     return await browser.newContext();
+  }
+
+  async newPage(params: BrowserContext): Promise<Either<Failure, Page>> {
+    this.logger.info("[BrowserRepository.newPage] started.");
+
+    this.logger.info("[BrowserRepository.newPage] completed.");
+
+    return new Left(new BrowserFailure(""));
   }
 }
 
