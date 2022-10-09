@@ -20,6 +20,8 @@ jobs:
       run: yarn
     - name: Build main process
       run: yarn build:main
+    - name: Build renderer process
+      run: yarn build:renderer
     - name: Test
       run: yarn test
 
