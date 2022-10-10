@@ -9,3 +9,9 @@ const repository = new BotRepositoryImpl(
   mockLogger,
   mockNewPage,
 );
+
+describe("BotRepository", () => {
+  describe("NewBot", () => {
+    it("", async () => { });
+  });
+});

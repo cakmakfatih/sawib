@@ -1,7 +1,7 @@
 import { Either } from '@typed-f/either';
 import { BrowserContext, Page } from 'playwright-firefox';
 import BotRepository from '../../domain/repositories/BotRepository';
-import BotControllerImpl from '../../presentation/controllers/BotController';
+import BotController from '../../presentation/controllers/BotController';
 import { inject, injectable } from 'tsyringe';
 import Tokens from '../../../../bin/Tokens';
 import Logger from '../../../../core/Logger';
@@ -22,7 +22,7 @@ class BotRepositoryImpl implements BotRepository {
     this.newPage = newPage;
   }
 
-  newBot(stealthBrowser: StealthBrowser): Promise<Either<Failure, BotControllerImpl>> {
+  newBot(stealthBrowser: StealthBrowser): Promise<Either<Failure, BotController>> {
     throw new Error("Method not implemented.");
   }
 
