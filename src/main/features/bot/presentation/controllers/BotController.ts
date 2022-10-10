@@ -1,5 +1,5 @@
 import { Page } from 'playwright-firefox';
-import { container, inject, injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import StealthBrowser from '../../../../features/browser/domain/entities/StealthBrowser';
 import { ICreatePages } from '../../domain/usecases/CreatePages';
 import Tokens from '../../../../bin/Tokens';

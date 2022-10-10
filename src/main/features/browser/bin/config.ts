@@ -9,6 +9,8 @@ export const DEFAULT_LAUNCH_OPTIONS: StealthBrowserLaunchOptions = {
   ignoreDefaultArgs: ['--hide-scrollbars', '--mute-audio'],
 };
 
+export const CONCURRENCY: number = 5;
+
 export const DEFAULT_ABOUT_CONFIG: AboutConfig = {
   "javascript.use_us_english_locale": true,
   "browser.contentblocking.category": "standard",
