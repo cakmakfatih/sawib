@@ -21,15 +21,6 @@ const repository = new BrowserRepositoryImpl(
 );
 
 describe("BrowserRepository", () => {
-  beforeEach(() => {
-    mockLogger.info.resetHistory();
-    mockLogger.warn.resetHistory();
-    mockLogger.error.resetHistory();
-    mockFirefox.launch.resetHistory();
-    mockBrowser.newContext.resetHistory();
-    mockBrowser.close.resetHistory();
-  });
-
   describe("launch", () => {
     let successfulResult: StealthBrowser;
 
@@ -38,6 +29,15 @@ describe("BrowserRepository", () => {
         browser: mockBrowser,
         context: mockContext,
       };
+    });
+
+    beforeEach(() => {
+      mockLogger.info.resetHistory();
+      mockLogger.warn.resetHistory();
+      mockLogger.error.resetHistory();
+      mockFirefox.launch.resetHistory();
+      mockBrowser.newContext.resetHistory();
+      mockBrowser.close.resetHistory();
     });
 
     it("should call [Logger.info] correctly", async () => {
