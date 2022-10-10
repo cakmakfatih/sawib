@@ -1,4 +1,4 @@
-import { Either } from '@typed-f/either';
+import { Either, Left, Right } from '@typed-f/either';
 import { BrowserContext, Page } from 'playwright-firefox';
 import BotRepository from '../../domain/repositories/BotRepository';
 import BotController from '../../presentation/controllers/BotController';
@@ -22,8 +22,14 @@ class BotRepositoryImpl implements BotRepository {
     this.newPage = newPage;
   }
 
-  newBot(stealthBrowser: StealthBrowser): Promise<Either<Failure, BotController>> {
-    throw new Error("Method not implemented.");
+  async newBot(stealthBrowser: StealthBrowser): Promise<Either<Failure, BotController>> {
+    this.logger.info("[BotRepository.newBot] started.");
+
+    const botController = new BotController(stealthBrowser);
+
+    this.logger.info("[BotRepository.newBot] completed.");
+
+    return new Right(botController);
   }
 
   createPages(context: BrowserContext): Promise<Either<Failure, Page[]>> {

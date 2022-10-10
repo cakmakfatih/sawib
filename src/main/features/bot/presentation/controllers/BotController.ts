@@ -19,7 +19,7 @@ class BotControllerImpl implements BotController {
   ) {
     this.stealthBrowser = stealthBrowser;
 
-    this.createPages = createPages ?? container.resolve<ICreatePages>(Tokens.createPages);
+    this.createPages = createPages!;
   }
 }
 
