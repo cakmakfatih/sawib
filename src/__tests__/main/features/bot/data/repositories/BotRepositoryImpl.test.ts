@@ -137,7 +137,7 @@ describe("BotRepository", () => {
       const browserErr = new Error("test-err");
       const browserFailure = new BrowserFailure(NEW_PAGE_FAILURE_MESSAGE, browserErr);
 
-      const randomErrCallIndex = (Math.floor(Math.random() * ((CONCURRENCY - 1) + 1) + 1));
+      const randomErrCallIndex = Math.floor(Math.random() * ((CONCURRENCY - 1) - 0 + 1) + 0);
 
       for (let i = 0; i < CONCURRENCY; i++) {
         mockNewPage.onCall(i).resolves(i !== randomErrCallIndex ? new Right(mockPage) : new Left(browserFailure));
