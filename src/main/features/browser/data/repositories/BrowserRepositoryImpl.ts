@@ -8,7 +8,7 @@ import BrowserRepository from '../../domain/repositories/BrowserRepository';
 import { inject, injectable } from 'tsyringe';
 import { BrowserType, Browser, BrowserContext, FirefoxBrowser, Page } from 'playwright-firefox';
 import safePromise from '../../../../utils/safePromise';
-import { DEFAULT_ABOUT_CONFIG, DEFAULT_LAUNCH_OPTIONS } from '../../bin/config';
+import { DEFAULT_ABOUT_CONFIG, DEFAULT_LAUNCH_OPTIONS } from '../../../../bin/config';
 import AboutConfig from '../../domain/entities/AboutConfig';
 
 export const BROWSER_LAUNCH_FAILURE_MESSAGE = "Failed while launching the browser.";

@@ -5,7 +5,7 @@ import { deepEqual, equal, ok } from 'assert';
 import StealthBrowser from '../../../../../../main/features/browser/domain/entities/StealthBrowser';
 import BotController from '../../../../../../main/features/bot/presentation/controllers/BotController';
 import { Left, Right } from '@typed-f/either';
-import { CONCURRENCY } from '../../../../../../main/features/browser/bin/config';
+import { CONCURRENCY } from '../../../../../../main/bin/config';
 import { Page } from 'playwright-firefox';
 import { NEW_PAGE_FAILURE_MESSAGE } from '../../../../../../main/features/browser/data/repositories/BrowserRepositoryImpl';
 import { BotFailure, BrowserFailure } from '../../../../../../main/core/error/failures';

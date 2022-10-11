@@ -6,7 +6,7 @@ import BrowserRepositoryImpl, { BROWSER_LAUNCH_FAILURE_MESSAGE, CREATE_CONTEXT_F
 import StealthBrowser from '../../../../../../main/features/browser/domain/entities/StealthBrowser';
 import { Left, Right } from '@typed-f/either';
 import { BrowserFailure } from '../../../../../../main/core/error/failures';
-import { DEFAULT_ABOUT_CONFIG, DEFAULT_LAUNCH_OPTIONS } from '../../../../../../main/features/browser/bin/config';
+import { DEFAULT_ABOUT_CONFIG, DEFAULT_LAUNCH_OPTIONS } from '../../../../../../main/bin/config';
 import StealthBrowserLaunchOptions from 'main/features/browser/domain/entities/StealthBrowserLaunchOptions';
 
 const mockFirefox = stubInterface<BrowserType<Browser>>();

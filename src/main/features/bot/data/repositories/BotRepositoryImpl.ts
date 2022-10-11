@@ -8,7 +8,7 @@ import Logger from '../../../../core/Logger';
 import { BotFailure, BrowserFailure, Failure } from '../../../../core/error/failures';
 import { INewPage } from '../../../../features/browser/domain/usecases/NewPage';
 import StealthBrowser from '../../../../features/browser/domain/entities/StealthBrowser';
-import { CONCURRENCY } from '../../../../features/browser/bin/config';
+import { CONCURRENCY } from '../../../../bin/config';
 
 export const CREATE_PAGES_FAILURE_MESSAGE = "Failed while creating pages.";
 
@@ -52,6 +52,8 @@ class BotRepositoryImpl implements BotRepository {
         pages.forEach(async (page) => {
           await page.close();
         });
+
+        this.logger.info("[BotRepository.createPages] completed.");
 
         return new Left(new BotFailure(CREATE_PAGES_FAILURE_MESSAGE, failure.error));
       }

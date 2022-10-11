@@ -1,5 +1,5 @@
-import AboutConfig from "../domain/entities/AboutConfig";
-import StealthBrowserLaunchOptions from "../domain/entities/StealthBrowserLaunchOptions";
+import AboutConfig from "../features/browser/domain/entities/AboutConfig";
+import StealthBrowserLaunchOptions from "../features/browser/domain/entities/StealthBrowserLaunchOptions";
 
 export const LAUNCH_TIMEOUT: number = 60000;
 
