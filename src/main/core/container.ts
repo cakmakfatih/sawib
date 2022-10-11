@@ -15,6 +15,7 @@ import BotRepository from 'main/features/bot/domain/repositories/BotRepository';
 import BotRepositoryImpl from 'main/features/bot/data/repositories/BotRepositoryImpl';
 import { CreatePages, ICreatePages } from 'main/features/bot/domain/usecases/CreatePages';
 import { INewBot, NewBot } from 'main/features/bot/domain/usecases/NewBot';
+import Store from 'electron-store';
 
 export function initSentry() {
   if (typeof process.env.SENTRY_DSN_URL !== "undefined")
@@ -63,6 +64,11 @@ export function initBot() {
 export function initExternal() {
   //! sentry
   initSentry();
+
+  //! electron-store
+  const store = new Store();
+
+  container.registerInstance<Store>(Tokens.electronStore, store);
 
   //! log4js
   const logger = log4js.getLogger();
