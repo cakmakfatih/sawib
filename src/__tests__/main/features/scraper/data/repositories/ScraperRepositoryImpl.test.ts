@@ -1,6 +1,6 @@
 import Logger from 'main/core/Logger';
 import sinon, { stubInterface } from 'ts-sinon';
-import ScraperRepositoryImpl, { SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
+import ScraperRepositoryImpl, { SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
 import ScraperLocalDataSource from '../../../../../../main/features/scraper/data/datasources/ScraperLocalDataSource';
 import { deepEqual, equal, ok } from 'assert';
 import { ScrapePartNumberParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumber';
@@ -13,17 +13,23 @@ const mockLogger = stubInterface<Logger>();
 const mockLocalDataSource = stubInterface<ScraperLocalDataSource>();
 const mockLaunchBrowser = sinon.stub();
 const mockNewBot = sinon.stub();
-const mockCreatePages = sinon.stub();
 
 const mockStealthBrowser = stubInterface<StealthBrowser>();
-const mockBotController = stubInterface<BotController>();
+const mockBotController = new BotController(mockStealthBrowser);
+
+const mockBotControllerInitialize = sinon.stub(mockBotController, "initialize");
+
+const closeBrowserSpy = sinon.spy();
+const closeContextSpy = sinon.spy();
+
+mockStealthBrowser.browser.close = closeBrowserSpy;
+mockStealthBrowser.context.close = closeContextSpy;
 
 const repository = new ScraperRepositoryImpl(
   mockLogger,
   mockLocalDataSource,
   mockLaunchBrowser,
   mockNewBot,
-  mockCreatePages,
 );
 
 describe("ScraperRepository", () => {
@@ -33,13 +39,16 @@ describe("ScraperRepository", () => {
       mockLogger.warn.resetHistory();
       mockLaunchBrowser.resetHistory();
       mockNewBot.resetHistory();
-      mockCreatePages.resetHistory();
+      closeBrowserSpy.resetHistory();
+      closeContextSpy.resetHistory();
+      mockBotControllerInitialize.resetHistory();
     });
 
     it("should call [Logger.info] correctly", async () => {
       // arrange
       mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
       mockNewBot.resolves(new Right(mockBotController));
+      mockBotControllerInitialize.resolves(new Right(null));
 
       // act
       const params: ScrapePartNumberParams = "12356";
@@ -63,10 +72,11 @@ describe("ScraperRepository", () => {
       // assert
       ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
       ok(mockLogger.warn.calledOnceWith(SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE));
+      ok(mockLaunchBrowser.calledOnceWith());
       deepEqual(result, new Left(browserFailure));
     });
 
-    it("should call [newBot] with correct params and return [Failure] if result is [Left]", async () => {
+    it("should call [newBot] with correct params and return [Failure] if result is [Left] and dispose browser", async () => {
       // arrange
       const err = new Error("test-err");
       const botFailure = new BotFailure("failed creating a bot", err);
@@ -79,7 +89,29 @@ describe("ScraperRepository", () => {
       // assert
       ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
       ok(mockLogger.warn.calledOnceWith(SCRAPER_NEW_BOT_WARNING_MESSAGE));
+      ok(closeContextSpy.calledOnceWith());
+      ok(closeBrowserSpy.calledOnceWith());
       ok(mockNewBot.calledOnceWith(mockStealthBrowser));
+      deepEqual(result, new Left(botFailure));
+    });
+
+    it("should call [BotController.initialize] and return [Failure] if result is [Left]", async () => {
+      // arrange
+      const err = new Error("test-err");
+      const botFailure = new BotFailure("failed creating pages", err);
+      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
+      mockNewBot.resolves(new Right(mockBotController));
+      mockBotControllerInitialize.resolves(new Left(botFailure));
+
+      // act
+      const result = await repository.scrapePartNumber("123456");
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
+      ok(mockLogger.warn.calledOnceWith(SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE));
+      ok(closeContextSpy.calledOnceWith());
+      ok(closeBrowserSpy.calledOnceWith());
+      ok(mockBotControllerInitialize.calledOnceWith());
       deepEqual(result, new Left(botFailure));
     });
   });

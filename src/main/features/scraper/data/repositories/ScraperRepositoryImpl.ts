@@ -8,11 +8,11 @@ import Tokens from '../../../../bin/Tokens';
 import Logger from '../../../../core/Logger';
 import { ScraperLocalDataSource } from '../datasources/ScraperLocalDataSource';
 import { INewBot } from '../../../bot/domain/usecases/NewBot';
-import { ICreatePages } from '../../../bot/domain/usecases/CreatePages';
 import { ILaunchBrowser } from '../../../browser/domain/usecases/LaunchBrowser';
 
 export const SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE = "Failed while calling [LaunchBrowser] from [ScraperRepository].";
 export const SCRAPER_NEW_BOT_WARNING_MESSAGE = "Failed while calling [NewBot] [ScraperRepository].";
+export const SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE = "Failed while calling [BotController.initialize] from [ScraperRepository].";
 
 @injectable()
 class ScraperRepositoryImpl implements ScraperRepository {
@@ -20,43 +20,57 @@ class ScraperRepositoryImpl implements ScraperRepository {
   private readonly localDataSource: ScraperLocalDataSource;
   private readonly launchBrowser: ILaunchBrowser;
   private readonly newBot: INewBot;
-  private readonly createPages: ICreatePages;
 
   constructor(
     @inject(Tokens.logger) logger: Logger,
     @inject(Tokens.scraperLocalDataSource) localDataSource: ScraperLocalDataSource,
     @inject(Tokens.launchBrowser) launchBrowser: ILaunchBrowser,
     @inject(Tokens.newBot) newBot: INewBot,
-    @inject(Tokens.createPages) createPages: ICreatePages,
   ) {
     this.logger = logger;
     this.localDataSource = localDataSource;
     this.launchBrowser = launchBrowser;
     this.newBot = newBot;
-    this.createPages = createPages;
   }
 
   async scrapePartNumber(params: ScrapePartNumberParams): Promise<Either<Failure, boolean>> {
     this.logger.info("[ScraperRepository.scrapePartNumber] started.");
 
-    const browserOrFailure = await this.launchBrowser();
+    const stealthBrowserOrFailure = await this.launchBrowser();
 
-    if (browserOrFailure.isLeft()) {
+    if (stealthBrowserOrFailure.isLeft()) {
       this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
       this.logger.warn(SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE);
 
-      return new Left(browserOrFailure.value);
+      return new Left(stealthBrowserOrFailure.value);
     }
 
-    const browser = browserOrFailure.value;
+    const stealthBrowser = stealthBrowserOrFailure.value;
 
-    const botControllerOrFailure = await this.newBot(browser);
+    const botControllerOrFailure = await this.newBot(stealthBrowser);
 
     if (botControllerOrFailure.isLeft()) {
       this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
       this.logger.warn(SCRAPER_NEW_BOT_WARNING_MESSAGE);
 
+      await stealthBrowser.context.close();
+      await stealthBrowser.browser.close();
+
       return new Left(botControllerOrFailure.value);
+    }
+
+    const botController = botControllerOrFailure.value;
+
+    const botOrFailure = await botController.initialize();
+
+    if (botOrFailure.isLeft()) {
+      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+      this.logger.warn(SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE);
+
+      await stealthBrowser.context.close();
+      await stealthBrowser.browser.close();
+
+      return new Left(botOrFailure.value);
     }
 
     this.logger.info("[ScraperRepository.scrapePartNumber] completed.");
