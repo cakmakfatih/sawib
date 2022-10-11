@@ -11,7 +11,8 @@ import { INewBot } from '../../../bot/domain/usecases/NewBot';
 import { ICreatePages } from '../../../bot/domain/usecases/CreatePages';
 import { ILaunchBrowser } from '../../../browser/domain/usecases/LaunchBrowser';
 
-export const SCRAPER_LAUNCH_BROWSER_FAILURE_MESSAGE = "Failed while launching the browser from [ScraperRepository].";
+export const SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE = "Failed while calling [LaunchBrowser] from [ScraperRepository].";
+export const SCRAPER_NEW_BOT_WARNING_MESSAGE = "Failed while calling [NewBot] [ScraperRepository].";
 
 @injectable()
 class ScraperRepositoryImpl implements ScraperRepository {
@@ -42,9 +43,20 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
     if (browserOrFailure.isLeft()) {
       this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
-      this.logger.warn(SCRAPER_LAUNCH_BROWSER_FAILURE_MESSAGE);
+      this.logger.warn(SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE);
 
       return new Left(browserOrFailure.value);
+    }
+
+    const browser = browserOrFailure.value;
+
+    const botControllerOrFailure = await this.newBot(browser);
+
+    if (botControllerOrFailure.isLeft()) {
+      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+      this.logger.warn(SCRAPER_NEW_BOT_WARNING_MESSAGE);
+
+      return new Left(botControllerOrFailure.value);
     }
 
     this.logger.info("[ScraperRepository.scrapePartNumber] completed.");
