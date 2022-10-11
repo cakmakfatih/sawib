@@ -1,4 +1,4 @@
-import Logger from 'main/core/Logger';
+import Logger from '../../../../../../main/core/Logger';
 import BotController from '../../../../../../main/features/bot/presentation/controllers/BotController';
 import StealthBrowser from '../../../../../../main/features/browser/domain/entities/StealthBrowser';
 import sinon, { stubInterface } from 'ts-sinon';
