@@ -13,8 +13,8 @@ import { ILaunchBrowser, LaunchBrowser } from '../features/browser/domain/usecas
 import { INewPage, NewPage } from '../features/browser/domain/usecases/NewPage';
 import BotRepository from 'main/features/bot/domain/repositories/BotRepository';
 import BotRepositoryImpl from 'main/features/bot/data/repositories/BotRepositoryImpl';
-import { ICreatePages } from 'main/features/bot/domain/usecases/CreatePages';
-import { INewBot } from 'main/features/bot/domain/usecases/NewBot';
+import { CreatePages, ICreatePages } from 'main/features/bot/domain/usecases/CreatePages';
+import { INewBot, NewBot } from 'main/features/bot/domain/usecases/NewBot';
 
 export function initSentry() {
   if (typeof process.env.SENTRY_DSN_URL !== "undefined")
@@ -35,10 +35,10 @@ export function initBrowser() {
 
   //! usecases
   container.register<ILaunchBrowser>(Tokens.launchBrowser, {
-    useValue: bindDependencies(Tokens.browserRepository, LaunchBrowser)
+    useValue: bindDependencies(Tokens.browserRepository, LaunchBrowser),
   });
   container.register<INewPage>(Tokens.newPage, {
-    useValue: bindDependencies(Tokens.browserRepository, NewPage)
+    useValue: bindDependencies(Tokens.browserRepository, NewPage),
   });
 }
 
@@ -53,10 +53,10 @@ export function initBot() {
 
   //! usecases
   container.register<ICreatePages>(Tokens.createPages, {
-    useValue: bindDependencies(Tokens.botRepository, LaunchBrowser)
+    useValue: bindDependencies(Tokens.botRepository, CreatePages),
   });
   container.register<INewBot>(Tokens.newBot, {
-    useValue: bindDependencies(Tokens.botRepository, NewPage)
+    useValue: bindDependencies(Tokens.botRepository, NewBot),
   });
 }
 
@@ -99,7 +99,7 @@ function initLogger() {
   container.register(
     Tokens.logger,
     { useClass: Logger },
-    { lifecycle: Lifecycle.Singleton }
+    { lifecycle: Lifecycle.Singleton },
   );
 }
 
