@@ -112,7 +112,7 @@ describe("BotRepository", () => {
       deepEqual(result, new Right(expectedResult));
     });
 
-    it("should log correctly and return [BotFailure] with error attached if [newPage] rejects", async () => {
+    it("should log correctly and return [BotFailure] with error attached if [newPage] resolves to [Failure]", async () => {
       // arrange
       const browserErr = new Error("test-err");
       const browserFailure = new BrowserFailure(NEW_PAGE_FAILURE_MESSAGE, browserErr);
@@ -126,6 +126,7 @@ describe("BotRepository", () => {
       const result = await repository.createPages(mockStealthBrowser.context);
 
       // assert
+      ok(mockLogger.info.calledWith("[BotRepository.createPages] completed with a [Failure]."));
       ok(mockLogger.warn.calledOnceWith(CREATE_PAGES_FAILURE_MESSAGE));
       ok(mockLogger.error.calledOnceWith(browserErr));
       deepEqual(result, new Left(expectedFailure));
@@ -138,7 +139,7 @@ describe("BotRepository", () => {
 
       const randomErrCallIndex = (Math.floor(Math.random() * ((CONCURRENCY - 1) + 1) + 1));
 
-      for (let i = 1; i < (CONCURRENCY); i++) {
+      for (let i = 0; i < CONCURRENCY; i++) {
         mockNewPage.onCall(i).resolves(i !== randomErrCallIndex ? new Right(mockPage) : new Left(browserFailure));
       }
 
