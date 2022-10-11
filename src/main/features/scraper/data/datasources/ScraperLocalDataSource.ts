@@ -8,7 +8,7 @@ const storeKeys = {
   partsCheckCredentials: "PARTS_CHECK_CREDENTIALS",
 };
 
-interface ScraperLocalDataSource {
+export interface ScraperLocalDataSource {
   getPartsCheckCredentials(): Promise<PartsCheckCredentials>;
   setPartsCheckCredentials(credentials: PartsCheckCredentials): Promise<boolean>;
 }
