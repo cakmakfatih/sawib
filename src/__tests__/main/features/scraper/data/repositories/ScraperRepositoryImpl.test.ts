@@ -1,13 +1,14 @@
-import Logger from 'main/core/Logger';
+import Logger from '../../../../../../main/core/Logger';
 import sinon, { stubInterface } from 'ts-sinon';
 import ScraperRepositoryImpl, { SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
 import ScraperLocalDataSource from '../../../../../../main/features/scraper/data/datasources/ScraperLocalDataSource';
 import { deepEqual, equal, ok } from 'assert';
 import { ScrapePartNumberParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumber';
-import { BotFailure, BrowserFailure } from '../../../../../../main/core/error/failures';
+import { BotFailure, BrowserFailure, ScraperFailure } from '../../../../../../main/core/error/failures';
 import { Left, Right } from '@typed-f/either';
 import StealthBrowser from '../../../../../../main/features/browser/domain/entities/StealthBrowser';
 import BotController from '../../../../../../main/features/bot/presentation/controllers/BotController';
+import { Page } from 'playwright-firefox';
 
 const mockLogger = stubInterface<Logger>();
 const mockLocalDataSource = stubInterface<ScraperLocalDataSource>();
@@ -22,6 +23,13 @@ const mockBotControllerInitialize = sinon.stub(mockBotController, "initialize");
 const closeBrowserSpy = sinon.spy();
 const closeContextSpy = sinon.spy();
 
+const mockPage: Page = stubInterface<Page>();
+
+const pageGoToSpy = sinon.spy();
+
+mockPage.goto = pageGoToSpy;
+
+mockBotController.pages = [mockPage];
 mockStealthBrowser.browser.close = closeBrowserSpy;
 mockStealthBrowser.context.close = closeContextSpy;
 
@@ -34,6 +42,12 @@ const repository = new ScraperRepositoryImpl(
 
 describe("ScraperRepository", () => {
   describe("scrapePartNumber", () => {
+    let loginToPartsCheckStub: sinon.SinonStub;
+
+    beforeAll(() => {
+      loginToPartsCheckStub = sinon.stub(repository, "loginToPartsCheck");
+    });
+
     beforeEach(() => {
       mockLogger.info.resetHistory();
       mockLogger.warn.resetHistory();
@@ -42,6 +56,8 @@ describe("ScraperRepository", () => {
       closeBrowserSpy.resetHistory();
       closeContextSpy.resetHistory();
       mockBotControllerInitialize.resetHistory();
+      loginToPartsCheckStub.resetHistory();
+      pageGoToSpy.resetHistory();
     });
 
     it("should call [Logger.info] correctly", async () => {
@@ -49,6 +65,7 @@ describe("ScraperRepository", () => {
       mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
       mockNewBot.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
+      loginToPartsCheckStub.resolves(new Right(true));
 
       // act
       const params: ScrapePartNumberParams = "12356";
@@ -67,7 +84,7 @@ describe("ScraperRepository", () => {
       mockLaunchBrowser.resolves(new Left(browserFailure));
 
       // act
-      const result = await repository.scrapePartNumber("123456");
+      const result = await repository.scrapePartNumber("test-url");
 
       // assert
       ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
@@ -84,7 +101,7 @@ describe("ScraperRepository", () => {
       mockNewBot.resolves(new Left(botFailure));
 
       // act
-      const result = await repository.scrapePartNumber("123456");
+      const result = await repository.scrapePartNumber("test-url");
 
       // assert
       ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
@@ -104,7 +121,7 @@ describe("ScraperRepository", () => {
       mockBotControllerInitialize.resolves(new Left(botFailure));
 
       // act
-      const result = await repository.scrapePartNumber("123456");
+      const result = await repository.scrapePartNumber("test-url");
 
       // assert
       ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
@@ -113,6 +130,55 @@ describe("ScraperRepository", () => {
       ok(closeBrowserSpy.calledOnceWith());
       ok(mockBotControllerInitialize.calledOnceWith());
       deepEqual(result, new Left(botFailure));
+    });
+
+    it("should call [loginToPartsCheck] with correct params", async () => {
+      // arrange
+      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
+      mockNewBot.resolves(new Right(mockBotController));
+      mockBotControllerInitialize.resolves(new Right(null));
+      loginToPartsCheckStub.resolves(new Right(true));
+
+      // act
+      await repository.scrapePartNumber("test-url");
+
+      // assert
+      ok(loginToPartsCheckStub.calledOnceWith(mockBotController.pages[0]));
+    });
+
+    it("should dispose and return [Failure] if [loginToPartsCheck] fails", async () => {
+      // arrange
+      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
+      mockNewBot.resolves(new Right(mockBotController));
+      mockBotControllerInitialize.resolves(new Right(null));
+
+      const err = new Error("scraper err");
+      const scraperFailure = new ScraperFailure("scraper failure", err);
+      loginToPartsCheckStub.resolves(new Left(scraperFailure));
+
+      // act
+      const result = await repository.scrapePartNumber("test-url");
+
+      // assert
+      deepEqual(result, new Left(scraperFailure));
+      ok(closeContextSpy.calledOnceWith());
+      ok(closeBrowserSpy.calledOnceWith());
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
+    });
+
+    it("should call [goto] with correct URL to Quotes using one of the [controller.pages]", async () => {
+      // arrange
+      const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
+      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
+      mockNewBot.resolves(new Right(mockBotController));
+      mockBotControllerInitialize.resolves(new Right(null));
+      loginToPartsCheckStub.resolves(new Right(true));
+
+      // act
+      await repository.scrapePartNumber(urlToScrape);
+
+      // assert
+      ok(pageGoToSpy.calledOnceWith(urlToScrape));
     });
   });
 });

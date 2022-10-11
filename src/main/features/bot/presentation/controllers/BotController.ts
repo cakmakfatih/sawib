@@ -13,7 +13,7 @@ interface BotController {
 
 @injectable()
 class BotControllerImpl implements BotController {
-  private readonly stealthBrowser: StealthBrowser;
+  public readonly stealthBrowser: StealthBrowser;
 
   private readonly logger: Logger;
   private readonly createPages: ICreatePages;

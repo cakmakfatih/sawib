@@ -9,10 +9,12 @@ import Logger from '../../../../core/Logger';
 import { ScraperLocalDataSource } from '../datasources/ScraperLocalDataSource';
 import { INewBot } from '../../../bot/domain/usecases/NewBot';
 import { ILaunchBrowser } from '../../../browser/domain/usecases/LaunchBrowser';
+import BotController from '../../../bot/presentation/controllers/BotController';
 
-export const SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE = "Failed while calling [LaunchBrowser] from [ScraperRepository].";
-export const SCRAPER_NEW_BOT_WARNING_MESSAGE = "Failed while calling [NewBot] [ScraperRepository].";
-export const SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE = "Failed while calling [BotController.initialize] from [ScraperRepository].";
+export const SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE = "Failed on [LaunchBrowser] call from [ScraperRepository].";
+export const SCRAPER_NEW_BOT_WARNING_MESSAGE = "Failed on [NewBot] call made from [ScraperRepository].";
+export const SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE = "Failed on [BotController.initialize] call made from [ScraperRepository].";
+export const SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE = "Failed on [BotRepository.loginToPartsCheck].";
 
 @injectable()
 class ScraperRepositoryImpl implements ScraperRepository {
@@ -59,24 +61,22 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
     const botController = botControllerOrFailure.value;
 
-    const botOrFailure = await botController.initialize();
+    const initializedOrFailed = await botController.initialize();
 
-    if (botOrFailure.isLeft()) {
+    if (initializedOrFailed.isLeft()) {
       this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
       this.logger.warn(SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE);
 
       await stealthBrowser.context.close();
       await stealthBrowser.browser.close();
 
-      return new Left(botOrFailure.value);
+      return new Left(initializedOrFailed.value);
     }
 
-    const bot = botOrFailure.value;
-
-    return new Right(bot);
+    return new Right(botController);
   }
 
-  async scrapePartNumber(params: ScrapePartNumberParams): Promise<Either<Failure, boolean>> {
+  async scrapePartNumber(url: ScrapePartNumberParams): Promise<Either<Failure, boolean>> {
     this.logger.info("[ScraperRepository.scrapePartNumber] started.");
 
     const botOrFailure = await this.launchBotController();
@@ -85,7 +85,25 @@ class ScraperRepositoryImpl implements ScraperRepository {
       return new Left(botOrFailure.value);
     }
 
+    const bot = botOrFailure.value;
+
+    const page = bot.pages[0];
+
+    const loggedInOrFailed = await this.loginToPartsCheck(page);
+
+    if (loggedInOrFailed.isLeft()) {
+      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+      this.logger.warn(SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE);
+
+      await bot.stealthBrowser.context.close();
+      await bot.stealthBrowser.browser.close();
+
+      return new Left(loggedInOrFailed.value);
+    }
+
     this.logger.info("[ScraperRepository.scrapePartNumber] completed.");
+
+    await page.goto(url);
 
     return new Left(new Failure(""));
   }
