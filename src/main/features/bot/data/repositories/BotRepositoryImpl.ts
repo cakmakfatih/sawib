@@ -53,7 +53,7 @@ class BotRepositoryImpl implements BotRepository {
           await page.close();
         });
 
-        this.logger.info("[BotRepository.createPages] completed.");
+        this.logger.info("[BotRepository.createPages] completed with a [Failure].");
 
         return new Left(new BotFailure(CREATE_PAGES_FAILURE_MESSAGE, failure.error));
       }
