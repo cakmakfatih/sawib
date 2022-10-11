@@ -1,6 +1,6 @@
 import { Either, Left, Right } from '@typed-f/either';
-import { Failure } from '../../../../core/error/failures';
-import { Page } from 'playwright-firefox';
+import { Failure, ScraperFailure } from '../../../../core/error/failures';
+import { Page, Response } from 'playwright-firefox';
 import ScraperRepository from '../../domain/repositories/ScraperRepository';
 import { ScrapePartNumberParams } from '../../domain/usecases/ScrapePartNumber';
 import { inject, injectable } from 'tsyringe';
@@ -10,11 +10,14 @@ import { ScraperLocalDataSource } from '../datasources/ScraperLocalDataSource';
 import { INewBot } from '../../../bot/domain/usecases/NewBot';
 import { ILaunchBrowser } from '../../../browser/domain/usecases/LaunchBrowser';
 import BotController from '../../../bot/presentation/controllers/BotController';
+import safePromise from '../../../../utils/safePromise';
 
 export const SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE = "Failed on [LaunchBrowser] call from [ScraperRepository].";
 export const SCRAPER_NEW_BOT_WARNING_MESSAGE = "Failed on [NewBot] call made from [ScraperRepository].";
 export const SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE = "Failed on [BotController.initialize] call made from [ScraperRepository].";
+
 export const SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE = "Failed on [BotRepository.loginToPartsCheck].";
+export const SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE = "Failed while running [page.goto] method.";
 
 @injectable()
 class ScraperRepositoryImpl implements ScraperRepository {
@@ -92,18 +95,31 @@ class ScraperRepositoryImpl implements ScraperRepository {
     const loggedInOrFailed = await this.loginToPartsCheck(page);
 
     if (loggedInOrFailed.isLeft()) {
-      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
-      this.logger.warn(SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE);
-
       await bot.stealthBrowser.context.close();
       await bot.stealthBrowser.browser.close();
+
+      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+      this.logger.warn(SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE);
 
       return new Left(loggedInOrFailed.value);
     }
 
     this.logger.info("[ScraperRepository.scrapePartNumber] completed.");
 
-    await page.goto(url);
+    const navigatedToUrlOrFailed = await safePromise<null | Response>(() => page.goto(url));
+
+    if (navigatedToUrlOrFailed.isLeft()) {
+      await bot.stealthBrowser.context.close();
+      await bot.stealthBrowser.browser.close();
+
+      const navigationErr = navigatedToUrlOrFailed.value;
+
+      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+      this.logger.warn(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE);
+      this.logger.error(navigationErr);
+
+      return new Left(new ScraperFailure(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, navigationErr));
+    }
 
     return new Left(new Failure(""));
   }

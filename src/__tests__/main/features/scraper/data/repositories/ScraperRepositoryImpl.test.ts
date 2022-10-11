@@ -1,6 +1,6 @@
 import Logger from '../../../../../../main/core/Logger';
 import sinon, { stubInterface } from 'ts-sinon';
-import ScraperRepositoryImpl, { SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
+import ScraperRepositoryImpl, { SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
 import ScraperLocalDataSource from '../../../../../../main/features/scraper/data/datasources/ScraperLocalDataSource';
 import { deepEqual, equal, ok } from 'assert';
 import { ScrapePartNumberParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumber';
@@ -25,9 +25,9 @@ const closeContextSpy = sinon.spy();
 
 const mockPage: Page = stubInterface<Page>();
 
-const pageGoToSpy = sinon.spy();
+const pageGoToStub = sinon.stub();
 
-mockPage.goto = pageGoToSpy;
+mockPage.goto = pageGoToStub;
 
 mockBotController.pages = [mockPage];
 mockStealthBrowser.browser.close = closeBrowserSpy;
@@ -51,13 +51,14 @@ describe("ScraperRepository", () => {
     beforeEach(() => {
       mockLogger.info.resetHistory();
       mockLogger.warn.resetHistory();
+      mockLogger.error.resetHistory();
       mockLaunchBrowser.resetHistory();
       mockNewBot.resetHistory();
       closeBrowserSpy.resetHistory();
       closeContextSpy.resetHistory();
       mockBotControllerInitialize.resetHistory();
       loginToPartsCheckStub.resetHistory();
-      pageGoToSpy.resetHistory();
+      pageGoToStub.resetHistory();
     });
 
     it("should call [Logger.info] correctly", async () => {
@@ -178,7 +179,32 @@ describe("ScraperRepository", () => {
       await repository.scrapePartNumber(urlToScrape);
 
       // assert
-      ok(pageGoToSpy.calledOnceWith(urlToScrape));
+      ok(pageGoToStub.calledOnceWith(urlToScrape));
+    });
+
+    it("should return [ScraperFailure] if navigation to the [page.goto] rejects", async () => {
+      // arrange
+      const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
+      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
+      mockNewBot.resolves(new Right(mockBotController));
+      mockBotControllerInitialize.resolves(new Right(null));
+      loginToPartsCheckStub.resolves(new Right(true));
+      const err = new Error("err");
+      pageGoToStub.rejects(err);
+
+      const failure = new ScraperFailure(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, err);
+
+      // act
+      const result = await repository.scrapePartNumber(urlToScrape);
+
+      // assert
+      ok(pageGoToStub.calledOnceWith(urlToScrape));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
+      ok(mockLogger.warn.calledWith(failure.message));
+      ok(mockLogger.error.calledWith(err));
+      ok(closeContextSpy.calledOnceWith());
+      ok(closeBrowserSpy.calledOnceWith());
+      deepEqual(result, new Left(failure));
     });
   });
 });
