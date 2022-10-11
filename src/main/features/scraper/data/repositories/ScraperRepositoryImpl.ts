@@ -1,6 +1,6 @@
 import { Either, Left } from '@typed-f/either';
 import { Failure } from '../../../../core/error/failures';
-import BotController from '../../../bot/presentation/controllers/BotController';
+import { Page } from 'playwright-firefox';
 import ScraperRepository from '../../domain/repositories/ScraperRepository';
 import { ScrapePartNumberParams } from '../../domain/usecases/ScrapePartNumber';
 import { inject, injectable } from 'tsyringe';
@@ -64,7 +64,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
     return new Left(new Failure(""));
   }
 
-  loginToPartsCheck(controller: BotController): Promise<Either<Failure, boolean>> {
+  loginToPartsCheck(page: Page): Promise<Either<Failure, boolean>> {
     throw new Error("Method not implemented.");
   }
 }
