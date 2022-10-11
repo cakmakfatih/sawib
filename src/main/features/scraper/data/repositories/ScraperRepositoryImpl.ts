@@ -1,4 +1,4 @@
-import { Either, Left } from '@typed-f/either';
+import { Either, Left, Right } from '@typed-f/either';
 import { Failure } from '../../../../core/error/failures';
 import { Page } from 'playwright-firefox';
 import ScraperRepository from '../../domain/repositories/ScraperRepository';
@@ -33,9 +33,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
     this.newBot = newBot;
   }
 
-  async scrapePartNumber(params: ScrapePartNumberParams): Promise<Either<Failure, boolean>> {
-    this.logger.info("[ScraperRepository.scrapePartNumber] started.");
-
+  private async launchBotController(): Promise<Either<Failure, BotController>> {
     const stealthBrowserOrFailure = await this.launchBrowser();
 
     if (stealthBrowserOrFailure.isLeft()) {
@@ -70,6 +68,20 @@ class ScraperRepositoryImpl implements ScraperRepository {
       await stealthBrowser.context.close();
       await stealthBrowser.browser.close();
 
+      return new Left(botOrFailure.value);
+    }
+
+    const bot = botOrFailure.value;
+
+    return new Right(bot);
+  }
+
+  async scrapePartNumber(params: ScrapePartNumberParams): Promise<Either<Failure, boolean>> {
+    this.logger.info("[ScraperRepository.scrapePartNumber] started.");
+
+    const botOrFailure = await this.launchBotController();
+
+    if (botOrFailure.isLeft()) {
       return new Left(botOrFailure.value);
     }
 
