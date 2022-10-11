@@ -11,6 +11,10 @@ import BrowserRepositoryImpl from '../features/browser/data/repositories/Browser
 import bindDependencies from './utils/bindDependencies';
 import { ILaunchBrowser, LaunchBrowser } from '../features/browser/domain/usecases/LaunchBrowser';
 import { INewPage, NewPage } from '../features/browser/domain/usecases/NewPage';
+import BotRepository from 'main/features/bot/domain/repositories/BotRepository';
+import BotRepositoryImpl from 'main/features/bot/data/repositories/BotRepositoryImpl';
+import { ICreatePages } from 'main/features/bot/domain/usecases/CreatePages';
+import { INewBot } from 'main/features/bot/domain/usecases/NewBot';
 
 export function initSentry() {
   if (typeof process.env.SENTRY_DSN_URL !== "undefined")
@@ -35,6 +39,24 @@ export function initBrowser() {
   });
   container.register<INewPage>(Tokens.newPage, {
     useValue: bindDependencies(Tokens.browserRepository, NewPage)
+  });
+}
+
+export function initBot() {
+  //! firefox
+  container.registerInstance<BrowserType<Browser>>(Tokens.firefox, firefox);
+
+  //! repositories
+  container.register<BotRepository>(Tokens.botRepository, {
+    useClass: BotRepositoryImpl,
+  }, { lifecycle: Lifecycle.Singleton });
+
+  //! usecases
+  container.register<ICreatePages>(Tokens.createPages, {
+    useValue: bindDependencies(Tokens.botRepository, LaunchBrowser)
+  });
+  container.register<INewBot>(Tokens.newBot, {
+    useValue: bindDependencies(Tokens.botRepository, NewPage)
   });
 }
 
@@ -84,6 +106,8 @@ function initLogger() {
 async function init() {
   initExternal();
   initLogger();
+  initBrowser();
+  initBot();
 }
 
 export default init;
