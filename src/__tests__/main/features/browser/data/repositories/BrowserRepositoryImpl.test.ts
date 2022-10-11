@@ -2,11 +2,11 @@ import { deepEqual, equal, ok } from 'assert';
 import { FirefoxBrowser, Browser, BrowserType, BrowserContext, Page } from 'playwright-firefox';
 import { stubInterface } from 'ts-sinon';
 import Logger from '../../../../../../main/core/Logger';
-import BrowserRepositoryImpl from '../../../../../../main/features/browser/data/repositories/BrowserRepositoryImpl';
+import BrowserRepositoryImpl, { BROWSER_LAUNCH_FAILURE_MESSAGE, CREATE_CONTEXT_FAILURE_MESSAGE, NEW_PAGE_FAILURE_MESSAGE } from '../../../../../../main/features/browser/data/repositories/BrowserRepositoryImpl';
 import StealthBrowser from '../../../../../../main/features/browser/domain/entities/StealthBrowser';
 import { Left, Right } from '@typed-f/either';
 import { BrowserFailure } from '../../../../../../main/core/error/failures';
-import { DEFAULT_ABOUT_CONFIG, DEFAULT_LAUNCH_OPTIONS } from '../../../../../../main/features/browser/bin/config';
+import { DEFAULT_ABOUT_CONFIG, DEFAULT_LAUNCH_OPTIONS } from '../../../../../../main/bin/config';
 import StealthBrowserLaunchOptions from 'main/features/browser/domain/entities/StealthBrowserLaunchOptions';
 
 const mockFirefox = stubInterface<BrowserType<Browser>>();
@@ -21,25 +21,25 @@ const repository = new BrowserRepositoryImpl(
 );
 
 describe("BrowserRepository", () => {
-  let successfulResult: StealthBrowser;
-
-  beforeAll(() => {
-    successfulResult = {
-      browser: mockBrowser,
-      context: mockContext,
-    };
-  });
-
-  beforeEach(() => {
-    mockLogger.info.resetHistory();
-    mockLogger.warn.resetHistory();
-    mockLogger.error.resetHistory();
-    mockFirefox.launch.resetHistory();
-    mockBrowser.newContext.resetHistory();
-    mockBrowser.close.resetHistory();
-  });
-
   describe("launch", () => {
+    let successfulResult: StealthBrowser;
+
+    beforeAll(() => {
+      successfulResult = {
+        browser: mockBrowser,
+        context: mockContext,
+      };
+    });
+
+    beforeEach(() => {
+      mockLogger.info.resetHistory();
+      mockLogger.warn.resetHistory();
+      mockLogger.error.resetHistory();
+      mockFirefox.launch.resetHistory();
+      mockBrowser.newContext.resetHistory();
+      mockBrowser.close.resetHistory();
+    });
+
     it("should call [Logger.info] correctly", async () => {
       // arrange
       mockFirefox.launch.resolves(mockBrowser);
@@ -83,16 +83,15 @@ describe("BrowserRepository", () => {
       // arrange
       const errMessage = "test error";
       const err = new Error(errMessage);
-      const failureMessage = "Failed while launching the browser.";
       mockFirefox.launch.rejects(err);
 
       // act
       const result = await repository.launch();
 
       // assert
-      ok(mockLogger.warn.calledOnceWith(failureMessage));
+      ok(mockLogger.warn.calledOnceWith(BROWSER_LAUNCH_FAILURE_MESSAGE));
       ok(mockLogger.error.calledOnceWith(err));
-      deepEqual(result, new Left(new BrowserFailure(failureMessage, err)));
+      deepEqual(result, new Left(new BrowserFailure(BROWSER_LAUNCH_FAILURE_MESSAGE, err)));
     });
 
     it("should call [browser.launch] with [DEFAULT_LAUNCH_OPTIONS] if no params given", async () => {
@@ -136,7 +135,6 @@ describe("BrowserRepository", () => {
       // arrange
       const errMessage = "test error";
       const err = new Error(errMessage);
-      const failureMessage = "Failed while creating a context.";
 
       mockBrowser.close.resolves();
       mockFirefox.launch.resolves(mockBrowser);
@@ -146,10 +144,10 @@ describe("BrowserRepository", () => {
       const result = await repository.launch();
 
       // assert
-      ok(mockLogger.warn.calledOnceWith(failureMessage));
+      ok(mockLogger.warn.calledOnceWith(CREATE_CONTEXT_FAILURE_MESSAGE));
       ok(mockLogger.error.calledOnceWith(err));
       ok(mockBrowser.close.calledOnceWith());
-      deepEqual(result, new Left(new BrowserFailure(failureMessage, err)));
+      deepEqual(result, new Left(new BrowserFailure(CREATE_CONTEXT_FAILURE_MESSAGE, err)));
     });
   });
 
@@ -201,16 +199,15 @@ describe("BrowserRepository", () => {
       // arrange
       const errMessage = "test error";
       const err = new Error(errMessage);
-      const failureMessage = "Failed while creating a new page from given context.";
       mockContext.newPage.rejects(err);
 
       // act
       const result = await repository.newPage(mockContext);
 
       // assert
-      ok(mockLogger.warn.calledOnceWith(failureMessage));
+      ok(mockLogger.warn.calledOnceWith(NEW_PAGE_FAILURE_MESSAGE));
       ok(mockLogger.error.calledOnceWith(err));
-      deepEqual(result, new Left(new BrowserFailure(failureMessage, err)));
+      deepEqual(result, new Left(new BrowserFailure(NEW_PAGE_FAILURE_MESSAGE, err)));
     });
   });
 });

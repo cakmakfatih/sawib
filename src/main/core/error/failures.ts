@@ -17,7 +17,19 @@ class BrowserFailure extends Failure {
   }
 }
 
+class BotFailure extends Failure {
+  message: string;
+  error?: Error;
+
+  constructor(message: string, error?: Error) {
+    super(message);
+
+    this.error = error;
+  }
+}
+
 export {
   Failure,
   BrowserFailure,
+  BotFailure,
 };

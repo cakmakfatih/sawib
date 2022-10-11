@@ -11,6 +11,10 @@ import BrowserRepositoryImpl from '../features/browser/data/repositories/Browser
 import bindDependencies from './utils/bindDependencies';
 import { ILaunchBrowser, LaunchBrowser } from '../features/browser/domain/usecases/LaunchBrowser';
 import { INewPage, NewPage } from '../features/browser/domain/usecases/NewPage';
+import BotRepository from 'main/features/bot/domain/repositories/BotRepository';
+import BotRepositoryImpl from 'main/features/bot/data/repositories/BotRepositoryImpl';
+import { CreatePages, ICreatePages } from 'main/features/bot/domain/usecases/CreatePages';
+import { INewBot, NewBot } from 'main/features/bot/domain/usecases/NewBot';
 
 export function initSentry() {
   if (typeof process.env.SENTRY_DSN_URL !== "undefined")
@@ -31,10 +35,28 @@ export function initBrowser() {
 
   //! usecases
   container.register<ILaunchBrowser>(Tokens.launchBrowser, {
-    useValue: bindDependencies(Tokens.browserRepository, LaunchBrowser)
+    useValue: bindDependencies(Tokens.browserRepository, LaunchBrowser),
   });
   container.register<INewPage>(Tokens.newPage, {
-    useValue: bindDependencies(Tokens.browserRepository, NewPage)
+    useValue: bindDependencies(Tokens.browserRepository, NewPage),
+  });
+}
+
+export function initBot() {
+  //! firefox
+  container.registerInstance<BrowserType<Browser>>(Tokens.firefox, firefox);
+
+  //! repositories
+  container.register<BotRepository>(Tokens.botRepository, {
+    useClass: BotRepositoryImpl,
+  }, { lifecycle: Lifecycle.Singleton });
+
+  //! usecases
+  container.register<ICreatePages>(Tokens.createPages, {
+    useValue: bindDependencies(Tokens.botRepository, CreatePages),
+  });
+  container.register<INewBot>(Tokens.newBot, {
+    useValue: bindDependencies(Tokens.botRepository, NewBot),
   });
 }
 
@@ -77,13 +99,15 @@ function initLogger() {
   container.register(
     Tokens.logger,
     { useClass: Logger },
-    { lifecycle: Lifecycle.Singleton }
+    { lifecycle: Lifecycle.Singleton },
   );
 }
 
 async function init() {
   initExternal();
   initLogger();
+  initBrowser();
+  initBot();
 }
 
 export default init;

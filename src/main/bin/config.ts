@@ -1,5 +1,5 @@
-import AboutConfig from "../domain/entities/AboutConfig";
-import StealthBrowserLaunchOptions from "../domain/entities/StealthBrowserLaunchOptions";
+import AboutConfig from "../features/browser/domain/entities/AboutConfig";
+import StealthBrowserLaunchOptions from "../features/browser/domain/entities/StealthBrowserLaunchOptions";
 
 export const LAUNCH_TIMEOUT: number = 60000;
 
@@ -8,6 +8,8 @@ export const DEFAULT_LAUNCH_OPTIONS: StealthBrowserLaunchOptions = {
   timeout: LAUNCH_TIMEOUT,
   ignoreDefaultArgs: ['--hide-scrollbars', '--mute-audio'],
 };
+
+export const CONCURRENCY: number = 5;
 
 export const DEFAULT_ABOUT_CONFIG: AboutConfig = {
   "javascript.use_us_english_locale": true,
