@@ -1,9 +1,9 @@
 import { Either } from '@typed-f/either';
 import { Failure } from '../../../../core/error/failures';
 import ScraperRepository from '../repositories/ScraperRepository';
-import BotController from '../../../bot/presentation/controllers/BotController';
+import { Page } from 'playwright-firefox';
 
-type LoginToPartsCheckParams = BotController;
+type LoginToPartsCheckParams = Page;
 
 interface ILoginToPartsCheck {
   (params: LoginToPartsCheckParams): Promise<Either<Failure, boolean>>;

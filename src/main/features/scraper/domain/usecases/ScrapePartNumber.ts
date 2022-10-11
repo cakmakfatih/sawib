@@ -1,12 +1,8 @@
 import { Either } from '@typed-f/either';
 import { Failure } from '../../../../core/error/failures';
-import BotController from '../../../bot/presentation/controllers/BotController';
 import ScraperRepository from '../repositories/ScraperRepository';
 
-type ScrapePartNumberParams = {
-  botController: BotController;
-  partNumberTxt: string;
-};
+type ScrapePartNumberParams = string;
 
 interface IScrapePartNumber {
   (params: ScrapePartNumberParams): Promise<Either<Failure, boolean>>;

@@ -3,18 +3,18 @@ import { equal, ok } from 'assert';
 import { Either, Right } from '@typed-f/either';
 import { ILoginToPartsCheck, LoginToPartsCheck, LoginToPartsCheckParams } from '../../../../../../main/features/scraper/domain/usecases/LoginToPartsCheck';
 import { Failure } from '../../../../../../main/core/error/failures';
-import BotController from '../../../../../../main/features/bot/presentation/controllers/BotController';
+import { Page } from 'playwright-firefox';
 import ScraperRepository from '../../../../../../main/features/scraper/domain/repositories/ScraperRepository';
 
 const mockRepository = stubInterface<ScraperRepository>();
-const mockBotController: BotController = stubInterface<BotController>();
+const mockPage: Page = stubInterface<Page>();
 
 const usecase: ILoginToPartsCheck = (params: LoginToPartsCheckParams) => LoginToPartsCheck(mockRepository, params);
 
 describe("LoginToPartsCheck", () => {
   it("should call [ScraperRepository.loginToPartsCheck] once with correct params", async () => {
     // arrange
-    const params: LoginToPartsCheckParams = mockBotController;
+    const params: LoginToPartsCheckParams = mockPage;
 
     // act
     await usecase(params);
@@ -25,7 +25,7 @@ describe("LoginToPartsCheck", () => {
 
   it("should return the value retrieved from [ScraperRepository.loginToPartsCheck]", async () => {
     // arrange
-    const params: LoginToPartsCheckParams = mockBotController;
+    const params: LoginToPartsCheckParams = mockPage;
 
     const repositoryResult: Either<Failure, boolean> = new Right(true);
     mockRepository.loginToPartsCheck.resolves(repositoryResult);

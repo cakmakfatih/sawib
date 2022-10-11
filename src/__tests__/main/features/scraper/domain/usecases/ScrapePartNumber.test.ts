@@ -3,21 +3,16 @@ import { equal, ok } from 'assert';
 import { Either, Right } from '@typed-f/either';
 import { IScrapePartNumber, ScrapePartNumber, ScrapePartNumberParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumber';
 import { Failure } from '../../../../../../main/core/error/failures';
-import BotController from '../../../../../../main/features/bot/presentation/controllers/BotController';
 import ScraperRepository from '../../../../../../main/features/scraper/domain/repositories/ScraperRepository';
 
 const mockRepository = stubInterface<ScraperRepository>();
-const mockBotController: BotController = stubInterface<BotController>();
 
 const usecase: IScrapePartNumber = (params: ScrapePartNumberParams) => ScrapePartNumber(mockRepository, params);
 
 describe("ScrapePartNumber", () => {
   it("should call [ScraperRepository.scrapePartNumber] once with correct params", async () => {
     // arrange
-    const params: ScrapePartNumberParams = {
-      botController: mockBotController,
-      partNumberTxt: "12356",
-    };
+    const params: ScrapePartNumberParams = "12356";
 
     // act
     await usecase(params);
@@ -28,10 +23,7 @@ describe("ScrapePartNumber", () => {
 
   it("should return the value retrieved from [ScraperRepository.scrapePartNumber]", async () => {
     // arrange
-    const params: ScrapePartNumberParams = {
-      botController: mockBotController,
-      partNumberTxt: "12356",
-    };
+    const params: ScrapePartNumberParams = "12356";
 
     const repositoryResult: Either<Failure, boolean> = new Right(true);
     mockRepository.scrapePartNumber.resolves(repositoryResult);
