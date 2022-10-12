@@ -331,6 +331,8 @@ class ScraperRepositoryImpl implements ScraperRepository {
   setScraperConfig(config: ScraperConfig): Either<Failure, boolean> {
     this.logger.info("[ScraperRepository.setScraperConfig] started.");
 
+    this.localDataSource.setScraperConfig(config);
+
     this.logger.info("[ScraperRepository.setScraperConfig] completed.");
 
     return new Right(true);

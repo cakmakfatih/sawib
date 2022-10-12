@@ -830,5 +830,13 @@ describe("ScraperRepository", () => {
       ok(mockLogger.info.calledWith("[ScraperRepository.setScraperConfig] completed."));
       equal(mockLogger.info.callCount, 2);
     });
+
+    it("should call [localDataSource.setScraperConfig] with correct params", () => {
+      // act
+      repository.setScraperConfig(scraperConfig);
+
+      // assert
+      ok(mockLocalDataSource.setScraperConfig.calledOnceWith(scraperConfig));
+    });
   });
 });
