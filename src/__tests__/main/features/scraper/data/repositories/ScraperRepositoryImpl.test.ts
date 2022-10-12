@@ -1,6 +1,6 @@
 import Logger from '../../../../../../main/core/Logger';
 import sinon, { stubInterface } from 'ts-sinon';
-import ScraperRepositoryImpl, { SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE, SCRAPER_GET_ATTRIBUTE_FAILURE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
+import ScraperRepositoryImpl, { PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE, SCRAPER_GET_ATTRIBUTE_FAILURE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
 import ScraperLocalDataSource from '../../../../../../main/features/scraper/data/datasources/ScraperLocalDataSource';
 import { deepEqual, equal, ok } from 'assert';
 import { ScrapePartNumberParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumber';
@@ -10,7 +10,7 @@ import StealthBrowser from '../../../../../../main/features/browser/domain/entit
 import BotController from '../../../../../../main/features/bot/presentation/controllers/BotController';
 import { Page, Locator } from 'playwright-firefox';
 import jsdom from 'jsdom';
-import { LoginToPartsCheckParams } from 'main/features/scraper/domain/usecases/LoginToPartsCheck';
+import ScraperConfig from '../../../../../../main/features/scraper/domain/entities/ScraperConfig';
 
 const document = new jsdom.JSDOM().window.document;
 
@@ -35,8 +35,10 @@ const elementHandlesStub = sinon.stub();
 mockLocator.elementHandles = elementHandlesStub;
 
 const pageGoToStub = sinon.stub();
+const pageCloseStub = sinon.stub();
 const pageLocatorStub = sinon.stub();
 
+mockPage.close = pageCloseStub;
 mockPage.goto = pageGoToStub;
 mockPage.locator = pageLocatorStub;
 
@@ -415,17 +417,32 @@ describe("ScraperRepository", () => {
   });
 
   describe("loginToPartsCheck", () => {
-    let mockPage: Page;
+    let getScraperConfigStub: sinon.SinonStub;
+    let scraperConfig: ScraperConfig;
 
     beforeAll(() => {
-      mockPage = stubInterface<Page>();
+      getScraperConfigStub = sinon.stub(repository, "getScraperConfig");
+      scraperConfig = {
+        partsCheckCredentials: {
+          username: "test-username",
+          password: "test-password",
+        },
+        partNumberSavePath: "test-path",
+      };
     });
 
     beforeEach(() => {
       mockLogger.info.resetHistory();
+      getScraperConfigStub.resetHistory();
+      pageCloseStub.resetHistory();
+      pageGoToStub.resetHistory();
     });
 
     it("should call [Logger.info] correctly", async () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+      pageGoToStub.resolves();
+
       // act
       await repository.loginToPartsCheck(mockPage);
 
@@ -433,6 +450,58 @@ describe("ScraperRepository", () => {
       ok(mockLogger.info.calledWith("[ScraperRepository.loginToPartsCheck] started."));
       ok(mockLogger.info.calledWith("[ScraperRepository.loginToPartsCheck] completed."));
       equal(mockLogger.info.callCount, 2);
+    });
+
+    it("should call [getScraperConfig] and return [Failure] if it fails, and dispose page", async () => {
+      // arrange
+      const err = new Error("test-err");
+      const expectedFailure = new ScraperFailure("test-failure", err);
+      getScraperConfigStub.returns(new Left(expectedFailure));
+
+      // act
+      const result = await repository.loginToPartsCheck(mockPage);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.loginToPartsCheck] completed with a [Failure]."));
+      ok(getScraperConfigStub.calledOnceWith());
+      ok(pageCloseStub.calledOnceWith());
+      deepEqual(result, new Left(expectedFailure));
+    });
+
+    it("should call [page.goto] with correct params", async () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+      pageGoToStub.resolves();
+
+      // act
+      await repository.loginToPartsCheck(mockPage);
+
+      // assert
+      ok(pageGoToStub.calledOnceWith(PARTS_CHECK_LOGIN_URL));
+    });
+
+    it("should return [ScraperFailure] if navigation to the [page.goto] rejects", async () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+      const err = new Error("err");
+      pageGoToStub.rejects(err);
+
+      const failure = new ScraperFailure(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, err);
+
+      // act
+      const result = await repository.loginToPartsCheck(mockPage);
+
+      // assert
+      ok(pageGoToStub.calledOnceWith(PARTS_CHECK_LOGIN_URL));
+      ok(mockLogger.info.calledWith("[ScraperRepository.loginToPartsCheck] completed with a [Failure]."));
+      ok(mockLogger.warn.calledWith(failure.message));
+      ok(mockLogger.error.calledWith(err));
+      ok(pageCloseStub.calledOnceWith());
+      deepEqual(result, new Left(failure));
+    });
+
+    afterAll(() => {
+      getScraperConfigStub.restore();
     });
   });
 });

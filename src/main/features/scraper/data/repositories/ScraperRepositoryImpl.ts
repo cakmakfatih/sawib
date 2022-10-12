@@ -22,8 +22,12 @@ export const SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE = "Failed while running [pa
 export const SCRAPER_ELEMENT_HANDLES_FAILURE = "Failed while running [<locator>.elementHandles].";
 export const SCRAPER_GET_ATTRIBUTE_FAILURE = "Failed while running [<element>.getAttribute].";
 
+export const PARTS_CHECK_LOGIN_URL = "https://partscheck.com.au/global/login.php";
+
 export enum Selectors {
   partNumberInp = ".partNr",
+  loginUsernameInp = "#myuser",
+  loginPassInp = "#mypass",
 }
 
 @injectable()
@@ -180,18 +184,43 @@ class ScraperRepositoryImpl implements ScraperRepository {
       return new Left(failure);
     }
 
-    this.logger.info("[ScraperRepository.scrapePartNumber] completed.");
-
     await bot.stealthBrowser.context.close();
     await bot.stealthBrowser.browser.close();
 
     const partNumberSaveResult = partNumbersSavedOrFailed.value;
+
+    this.logger.info("[ScraperRepository.scrapePartNumber] completed.");
 
     return new Right(partNumberSaveResult);
   }
 
   async loginToPartsCheck(page: Page): Promise<Either<Failure, boolean>> {
     this.logger.info("[ScraperRepository.loginToPartsCheck] started.");
+
+    const scraperConfigOrFailure = this.getScraperConfig();
+
+    if (scraperConfigOrFailure.isLeft()) {
+      const getScraperConfigFailure = scraperConfigOrFailure.value;
+      this.logger.info("[ScraperRepository.loginToPartsCheck] completed with a [Failure].");
+
+      await page.close();
+
+      return new Left(getScraperConfigFailure);
+    }
+
+    const navigatedToUrlOrFailed = await safePromise<null | Response>(() => page.goto(PARTS_CHECK_LOGIN_URL));
+
+    if (navigatedToUrlOrFailed.isLeft()) {
+      await page.close();
+
+      const navigationErr = navigatedToUrlOrFailed.value;
+
+      this.logger.info("[ScraperRepository.loginToPartsCheck] completed with a [Failure].");
+      this.logger.warn(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE);
+      this.logger.error(navigationErr);
+
+      return new Left(new ScraperFailure(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, navigationErr));
+    }
 
     this.logger.info("[ScraperRepository.loginToPartsCheck] completed.");
 
