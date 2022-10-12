@@ -329,7 +329,11 @@ class ScraperRepositoryImpl implements ScraperRepository {
   }
 
   setScraperConfig(config: ScraperConfig): Either<Failure, boolean> {
-    throw new Error('Method not implemented.');
+    this.logger.info("[ScraperRepository.setScraperConfig] started.");
+
+    this.logger.info("[ScraperRepository.setScraperConfig] completed.");
+
+    return new Right(true);
   }
 
   getScraperConfig(): Either<Failure, ScraperConfig> {

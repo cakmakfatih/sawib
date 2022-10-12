@@ -648,7 +648,7 @@ describe("ScraperRepository", () => {
       deepEqual(result, new Left(expectedFailure));
     });
 
-    it("should return [Right] if everything ran correctly", async () => {
+    it("should return [Right<true>] if everything ran correctly", async () => {
       // arrange
       getScraperConfigStub.returns(new Right(scraperConfig));
       pageGoToStub.resolves();
@@ -716,6 +716,7 @@ describe("ScraperRepository", () => {
       // arrange
       getScraperConfigStub.returns(new Right(scraperConfig));
       const expectedFileName = `2018-12-24 07-12-00.csv`;
+      writeFileSyncStub.returns(null);
 
       // act
       repository.savePartNumbersAsCsv(partNumbersData);
@@ -730,6 +731,7 @@ describe("ScraperRepository", () => {
     it("should call [getScraperConfig] to get file save path for part numbers", () => {
       // arrange
       getScraperConfigStub.returns(new Right(scraperConfig));
+      writeFileSyncStub.returns(null);
 
       // act
       repository.savePartNumbersAsCsv(partNumbersData);
@@ -756,6 +758,7 @@ describe("ScraperRepository", () => {
       // arrange
       const expectedFileName = `2018-12-24 07-12-00.csv`;
       getScraperConfigStub.returns(new Right(scraperConfig));
+      writeFileSyncStub.returns(null);
 
       // act
       repository.savePartNumbersAsCsv(partNumbersData);
@@ -782,9 +785,50 @@ describe("ScraperRepository", () => {
       deepEqual(result, new Left(expectedFailure));
     });
 
+    it("should return [Right<true>] if everything ran correctly", async () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+      writeFileSyncStub.returns(null);
+
+      // act
+      const result = repository.savePartNumbersAsCsv(partNumbersData);
+
+      // assert
+      deepEqual(result, new Right(true));
+    });
+
     afterAll(() => {
       writeFileSyncStub.restore();
       getScraperConfigStub.restore();
+    });
+  });
+
+  describe("setScraperConfig", () => {
+    let scraperConfig: ScraperConfig;
+
+    beforeAll(() => {
+      scraperConfig = {
+        partsCheckCredentials: {
+          username: "test-username",
+          password: "test-password",
+        },
+        partNumberSavePath: "test-path",
+      };
+    });
+
+    beforeEach(() => {
+      mockLogger.info.resetHistory();
+      mockLocalDataSource.setScraperConfig.resetHistory();
+    });
+
+    it("should call [Logger.info] correctly", () => {
+      // act
+      repository.setScraperConfig(scraperConfig);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.setScraperConfig] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.setScraperConfig] completed."));
+      equal(mockLogger.info.callCount, 2);
     });
   });
 });
