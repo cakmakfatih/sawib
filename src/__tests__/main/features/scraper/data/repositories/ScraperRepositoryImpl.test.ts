@@ -10,6 +10,7 @@ import StealthBrowser from '../../../../../../main/features/browser/domain/entit
 import BotController from '../../../../../../main/features/bot/presentation/controllers/BotController';
 import { Page, Locator } from 'playwright-firefox';
 import jsdom from 'jsdom';
+import { LoginToPartsCheckParams } from 'main/features/scraper/domain/usecases/LoginToPartsCheck';
 
 const document = new jsdom.JSDOM().window.document;
 
@@ -405,8 +406,33 @@ describe("ScraperRepository", () => {
       ok(closeContextSpy.calledOnceWith());
       ok(closeBrowserSpy.calledOnceWith());
       deepEqual(result, new Right(expectedResult));
-    })
+    });
+
+    afterAll(() => {
+      loginToPartsCheckStub.restore();
+      savePartNumbersAsCsv.restore();
+    });
   });
 
-  describe("", () => { });
+  describe("loginToPartsCheck", () => {
+    let mockPage: Page;
+
+    beforeAll(() => {
+      mockPage = stubInterface<Page>();
+    });
+
+    beforeEach(() => {
+      mockLogger.info.resetHistory();
+    });
+
+    it("should call [Logger.info] correctly", async () => {
+      // act
+      await repository.loginToPartsCheck(mockPage);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.loginToPartsCheck] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.loginToPartsCheck] completed."));
+      equal(mockLogger.info.callCount, 2);
+    });
+  });
 });

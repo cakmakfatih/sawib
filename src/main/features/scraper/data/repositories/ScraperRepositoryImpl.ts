@@ -190,8 +190,12 @@ class ScraperRepositoryImpl implements ScraperRepository {
     return new Right(partNumberSaveResult);
   }
 
-  loginToPartsCheck(page: Page): Promise<Either<Failure, boolean>> {
-    throw new Error("Method not implemented.");
+  async loginToPartsCheck(page: Page): Promise<Either<Failure, boolean>> {
+    this.logger.info("[ScraperRepository.loginToPartsCheck] started.");
+
+    this.logger.info("[ScraperRepository.loginToPartsCheck] completed.");
+
+    return new Left(new Failure(""));
   }
 
   savePartNumbersAsCsv(partNumbersArray: string[]): Either<Failure, boolean> {
