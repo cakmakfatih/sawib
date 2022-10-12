@@ -123,7 +123,15 @@ class ScraperRepositoryImpl implements ScraperRepository {
     }
 
     const partNumbersLocator = page.locator(Selectors.partNumberInp);
-    await partNumbersLocator.elementHandles();
+    const partNumberInpElements = await partNumbersLocator.elementHandles();
+
+    const partNumberValues: string[] = [];
+
+    for (let partNumberInp of partNumberInpElements) {
+      partNumberValues.push(await partNumberInp.getAttribute("value") ?? "");
+    }
+
+    this.savePartNumbersAsCsv(partNumberValues);
 
     this.logger.info("[ScraperRepository.scrapePartNumber] completed.");
 
@@ -134,7 +142,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
     throw new Error("Method not implemented.");
   }
 
-  savePartNumbersAsCsv(partNumbersArray: string[]): Promise<Either<Failure, boolean>> {
+  savePartNumbersAsCsv(partNumbersArray: string[]): Either<Failure, boolean> {
     throw new Error('Method not implemented.');
   }
 }

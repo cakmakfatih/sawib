@@ -54,9 +54,11 @@ const repository = new ScraperRepositoryImpl(
 describe("ScraperRepository", () => {
   describe("scrapePartNumber", () => {
     let loginToPartsCheckStub: sinon.SinonStub;
+    let savePartNumbersAsCsv: sinon.SinonStub;
 
     beforeAll(() => {
       loginToPartsCheckStub = sinon.stub(repository, "loginToPartsCheck");
+      savePartNumbersAsCsv = sinon.stub(repository, "savePartNumbersAsCsv");
     });
 
     beforeEach(() => {
@@ -72,6 +74,7 @@ describe("ScraperRepository", () => {
       pageGoToStub.resetHistory();
       pageLocatorStub.resetHistory();
       elementHandlesStub.resetHistory();
+      savePartNumbersAsCsv.resetHistory();
     });
 
     it("should call [Logger.info] correctly", async () => {
@@ -250,7 +253,7 @@ describe("ScraperRepository", () => {
         nodes.push(examplePartNumInput);
       }
 
-      elementHandlesStub.resolves(nodes as any);
+      elementHandlesStub.resolves(nodes);
 
       // act
       await repository.scrapePartNumber(urlToScrape);
@@ -258,6 +261,42 @@ describe("ScraperRepository", () => {
       // assert
       ok(pageLocatorStub.calledWith(Selectors.partNumberInp));
       ok(elementHandlesStub.calledOnceWith());
+    });
+
+    it("should call [savePartNumbersAsCsv] with correctly scraped data", async () => {
+      // arrange
+      const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
+      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
+      mockNewBot.resolves(new Right(mockBotController));
+      mockBotControllerInitialize.resolves(new Right(null));
+      loginToPartsCheckStub.resolves(new Right(true));
+      pageGoToStub.resolves();
+      pageLocatorStub.returns(mockLocator);
+
+      const nodes: Node[] = [];
+
+      const inputCount = Math.floor(Math.random() * 11);
+
+      for (let i = 0; i < inputCount; i++) {
+        const examplePartNumInput = document.createElement("input");
+        examplePartNumInput.setAttribute("value", `partnum-${i}`);
+
+        nodes.push(examplePartNumInput);
+      }
+
+      elementHandlesStub.resolves(nodes);
+
+      const expectedData = [];
+
+      for (let i = 0; i < inputCount; i++) {
+        expectedData.push(`partnum-${i}`);
+      }
+
+      // act
+      await repository.scrapePartNumber(urlToScrape);
+
+      // assert
+      ok(savePartNumbersAsCsv.calledOnceWith(expectedData));
     });
   });
 });

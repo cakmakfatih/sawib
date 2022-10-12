@@ -5,7 +5,7 @@ import { LoginToPartsCheckParams } from '../usecases/LoginToPartsCheck';
 interface ScraperRepository {
   scrapePartNumber(url: string): Promise<Either<Failure, boolean>>;
   loginToPartsCheck(params: LoginToPartsCheckParams): Promise<Either<Failure, boolean>>;
-  savePartNumbersAsCsv(partNumbersArray: string[]): Promise<Either<Failure, boolean>>;
+  savePartNumbersAsCsv(partNumbersArray: string[]): Either<Failure, boolean>;
 }
 
 export default ScraperRepository;

@@ -5,11 +5,11 @@ import ScraperRepository from "../repositories/ScraperRepository";
 type SavePartNumbersAsCsvParams = string[];
 
 interface ISavePartNumbersAsCsv {
-  (params: SavePartNumbersAsCsvParams): Promise<Either<Failure, boolean>>;
+  (params: SavePartNumbersAsCsvParams): Either<Failure, boolean>;
 }
 
-async function SavePartNumbersAsCsv(repository: ScraperRepository, params: SavePartNumbersAsCsvParams): Promise<Either<Failure, boolean>> {
-  return await repository.savePartNumbersAsCsv(params);
+function SavePartNumbersAsCsv(repository: ScraperRepository, params: SavePartNumbersAsCsvParams): Either<Failure, boolean> {
+  return repository.savePartNumbersAsCsv(params);
 }
 
 export {
