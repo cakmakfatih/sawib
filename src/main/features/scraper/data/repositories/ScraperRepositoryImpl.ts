@@ -32,6 +32,7 @@ export const SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE = "Failed while running [<loc
 export const FS_WRITE_FILE_SYNC_FAILURE_MESSAGE = "Failed while running [<fs>.writeFileSync] on [ScraperRepository.savePartNumbersAsCsv].";
 
 export const SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE = "Failed while running [<localDataSource>.setScraperConfig].";
+export const SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE = "Failed while running [<localDataSource>.getScraperConfig].";
 
 export const PARTS_CHECK_LOGIN_URL = "https://partscheck.com.au/global/login.php";
 
@@ -352,7 +353,26 @@ class ScraperRepositoryImpl implements ScraperRepository {
   }
 
   getScraperConfig(): Either<Failure, ScraperConfig> {
-    throw new Error('Method not implemented.');
+    this.logger.info("[ScraperRepository.getScraperConfig] started.");
+
+    const scraperConfigOrFailure = safeCall<ScraperConfig>(() => this.localDataSource.getScraperConfig());
+
+    if (scraperConfigOrFailure.isLeft()) {
+      const setScraperConfigErr = scraperConfigOrFailure.value;
+
+      this.logger.warn(SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE);
+      this.logger.error(setScraperConfigErr);
+
+      this.logger.info("[ScraperRepository.getScraperConfig] completed with a [Failure].");
+
+      return new Left(new ScraperFailure(SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE, setScraperConfigErr));
+    }
+
+    const scraperConfig = scraperConfigOrFailure.value;
+
+    this.logger.info("[ScraperRepository.getScraperConfig] completed.");
+
+    return new Right(scraperConfig);
   }
 
   private async fillCredentialInputs({ page, username, password }: { page: Page; username: string; password: string; }): Promise<Either<Failure, boolean>> {

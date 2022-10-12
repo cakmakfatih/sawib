@@ -1,6 +1,6 @@
 import Logger from '../../../../../../main/core/Logger';
 import sinon, { stubInterface } from 'ts-sinon';
-import ScraperRepositoryImpl, { FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, SCRAPER_PAGE_FILL_FAILURE_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
+import ScraperRepositoryImpl, { FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, SCRAPER_PAGE_FILL_FAILURE_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
 import ScraperLocalDataSource from '../../../../../../main/features/scraper/data/datasources/ScraperLocalDataSource';
 import { deepEqual, equal, ok } from 'assert';
 import { ScrapePartNumberParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumber';
@@ -837,6 +837,9 @@ describe("ScraperRepository", () => {
     });
 
     it("should call [localDataSource.setScraperConfig] with correct params", () => {
+      // arrange
+      mockLocalDataSource.setScraperConfig.returns(true);
+
       // act
       repository.setScraperConfig(scraperConfig);
 
@@ -859,6 +862,90 @@ describe("ScraperRepository", () => {
       ok(mockLogger.warn.calledWith(SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE));
       ok(mockLogger.error.calledWith(err));
       deepEqual(result, new Left(expectedFailure));
+    });
+
+    it("should return [Right<true>] if everything ran without an issue", () => {
+      // arrange
+      mockLocalDataSource.setScraperConfig.returns(true);
+
+      // act
+      const result = repository.setScraperConfig(scraperConfig);
+
+      // assert
+      deepEqual(result, new Right(true));
+    });
+  });
+
+  describe("getScraperConfig", () => {
+    let scraperConfig: ScraperConfig;
+
+    beforeAll(() => {
+      scraperConfig = {
+        partsCheckCredentials: {
+          username: "test-username",
+          password: "test-password",
+        },
+        partNumberSavePath: "test-path",
+      };
+    });
+
+    beforeEach(() => {
+      mockLogger.info.resetHistory();
+      mockLogger.warn.resetHistory();
+      mockLogger.error.resetHistory();
+      mockLocalDataSource.getScraperConfig.resetHistory();
+    });
+
+    it("should call [Logger.info] correctly", () => {
+      // arrange
+      mockLocalDataSource.getScraperConfig.returns(scraperConfig);
+
+      // act
+      repository.getScraperConfig();
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.getScraperConfig] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.getScraperConfig] completed."));
+      equal(mockLogger.info.callCount, 2);
+    });
+
+    it("should call [localDataSource.getScraperConfig] with correct params", () => {
+      // arrange
+      mockLocalDataSource.getScraperConfig.returns(scraperConfig);
+
+      // act
+      repository.getScraperConfig();
+
+      // assert
+      ok(mockLocalDataSource.getScraperConfig.calledOnceWith());
+    });
+
+    it("should return [Failure] if [localDataSource.getScraperConfig] throws", () => {
+      // arrange
+      const err = new Error("test-err");
+      mockLocalDataSource.getScraperConfig.throws(err);
+
+      const expectedFailure = new ScraperFailure(SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE, err);
+
+      // act
+      const result = repository.getScraperConfig();
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.getScraperConfig] completed with a [Failure]."));
+      ok(mockLogger.warn.calledWith(SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE));
+      ok(mockLogger.error.calledWith(err));
+      deepEqual(result, new Left(expectedFailure));
+    });
+
+    it("should return [Right<ScraperConfig>] if everything ran without an issue", () => {
+      // arrange
+      mockLocalDataSource.getScraperConfig.returns(scraperConfig);
+
+      // act
+      const result = repository.getScraperConfig();
+
+      // assert
+      deepEqual(result, new Right(scraperConfig));
     });
   });
 });
