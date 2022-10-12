@@ -666,4 +666,8 @@ describe("ScraperRepository", () => {
       getScraperConfigStub.restore();
     });
   });
+
+  describe("savePartNumbersAsCsv", () => {
+    it("", async () => { });
+  });
 });
