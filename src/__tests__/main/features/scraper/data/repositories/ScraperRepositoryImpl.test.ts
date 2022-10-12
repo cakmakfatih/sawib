@@ -670,6 +670,7 @@ describe("ScraperRepository", () => {
   });
 
   describe("savePartNumbersAsCsv", () => {
+    let clock: sinon.SinonFakeTimers;
     let writeFileSyncStub: sinon.SinonStub;
     let getScraperConfigStub: sinon.SinonStub;
 
@@ -681,7 +682,7 @@ describe("ScraperRepository", () => {
       getScraperConfigStub = sinon.stub(repository, "getScraperConfig");
       writeFileSyncStub = sinon.stub(fs, 'writeFileSync');
 
-      successfulCsvResult = fs.readFileSync(path.join(__dirname, "..", "..", "..", "..", "..", "static", "scrapePartNumbersResult.csv"), "utf-8")
+      successfulCsvResult = fs.readFileSync(path.join(__dirname, "..", "..", "..", "..", "..", "static", "scrapePartNumbersResult.csv"), "utf-8");
       partNumbersData = [
         "521596A-940",
         "52156600 70",
@@ -699,9 +700,16 @@ describe("ScraperRepository", () => {
     });
 
     beforeEach(() => {
+      const fakeDate = new Date(2018, 11, 24, 10, 33, 30, 0);
+      clock = sinon.useFakeTimers(fakeDate);
+
       mockLogger.info.resetHistory();
       getScraperConfigStub.resetHistory();
       writeFileSyncStub.resetHistory();
+    });
+
+    afterEach(() => {
+      clock.restore();
     });
 
     it("should call [Logger.info] correctly", () => {
@@ -740,6 +748,18 @@ describe("ScraperRepository", () => {
       // assert
       ok(mockLogger.info.calledWith("[ScraperRepository.savePartNumbersAsCsv] completed with a [Failure]."));
       deepEqual(result, new Left(expectedFailure));
+    });
+
+    it("should call [writeFileSync] with correct params", () => {
+      // arrange
+      const expectedFileName = `2018-12-24 10:33.csv`;
+      getScraperConfigStub.returns(new Right(scraperConfig));
+
+      // act
+      repository.savePartNumbersAsCsv(partNumbersData);
+
+      // assert
+      writeFileSyncStub.calledOnceWith(path.join(scraperConfig.partNumberSavePath, expectedFileName), successfulCsvResult, { encoding: "utf-8" });
     });
 
     afterAll(() => {

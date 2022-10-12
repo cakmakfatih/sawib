@@ -11,6 +11,9 @@ import { ILaunchBrowser } from '../../../browser/domain/usecases/LaunchBrowser';
 import BotController from '../../../bot/presentation/controllers/BotController';
 import safePromise from '../../../../utils/safePromise';
 import ScraperConfig from '../../domain/entities/ScraperConfig';
+import fs from 'fs';
+import moment from 'moment';
+import path from 'path';
 
 export const SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE = "Failed on [LaunchBrowser] call from [ScraperRepository].";
 export const SCRAPER_NEW_BOT_WARNING_MESSAGE = "Failed on [NewBot] call made from [ScraperRepository].";
@@ -283,7 +286,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
     return new Right(true);
   }
 
-  savePartNumbersAsCsv(partNumbersArray: string[]): Either<Failure, boolean> {
+  savePartNumbersAsCsv(partNumbers: string[]): Either<Failure, boolean> {
     this.logger.info("[ScraperRepository.savePartNumbersAsCsv] started.");
 
     const scraperConfigOrFailure = this.getScraperConfig();
@@ -296,7 +299,16 @@ class ScraperRepositoryImpl implements ScraperRepository {
       return new Left(scraperConfigFailure);
     }
 
+    const scraperConfig = scraperConfigOrFailure.value;
+
     this.logger.info("[ScraperRepository.savePartNumbersAsCsv] completed.");
+
+    const fileName = `${moment().utc().format("YYYY-MM-DD HH-MM-SS").toString()}.csv`;
+    const pathToSave = path.join(scraperConfig.partNumberSavePath, fileName);
+
+    partNumbers = partNumbers.map((i) => `"${i.replace(/-| /g, "")}"`);
+
+    fs.writeFileSync(pathToSave, partNumbers.join("\n"), { encoding: "utf-8" })
 
     return new Right(true);
   }
