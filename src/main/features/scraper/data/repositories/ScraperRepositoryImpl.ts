@@ -301,14 +301,16 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
     const scraperConfig = scraperConfigOrFailure.value;
 
-    this.logger.info("[ScraperRepository.savePartNumbersAsCsv] completed.");
-
     const fileName = `${moment().utc().format("YYYY-MM-DD HH-MM-SS").toString()}.csv`;
     const pathToSave = path.join(scraperConfig.partNumberSavePath, fileName);
 
     partNumbers = partNumbers.map((i) => `"${i.replace(/-| /g, "")}"`);
 
-    fs.writeFileSync(pathToSave, partNumbers.join("\n"), { encoding: "utf-8" })
+    fs.writeFileSync(pathToSave, partNumbers.join("\n"), { encoding: "utf-8" });
+
+    this.logger.info(`[ScraperRepository.savePartNumbersAsCsv] saved CSV file to ${pathToSave}.`);
+
+    this.logger.info("[ScraperRepository.savePartNumbersAsCsv] completed.");
 
     return new Right(true);
   }

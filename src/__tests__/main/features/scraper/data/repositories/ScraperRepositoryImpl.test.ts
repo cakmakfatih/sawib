@@ -715,6 +715,7 @@ describe("ScraperRepository", () => {
     it("should call [Logger.info] correctly", () => {
       // arrange
       getScraperConfigStub.returns(new Right(scraperConfig));
+      const expectedFileName = `2018-12-24 07-12-00.csv`;
 
       // act
       repository.savePartNumbersAsCsv(partNumbersData);
@@ -722,7 +723,8 @@ describe("ScraperRepository", () => {
       // assert
       ok(mockLogger.info.calledWith("[ScraperRepository.savePartNumbersAsCsv] started."));
       ok(mockLogger.info.calledWith("[ScraperRepository.savePartNumbersAsCsv] completed."));
-      equal(mockLogger.info.callCount, 2);
+      ok(mockLogger.info.calledWith(`[ScraperRepository.savePartNumbersAsCsv] saved CSV file to ${path.join(scraperConfig.partNumberSavePath, expectedFileName)}.`));
+      equal(mockLogger.info.callCount, 3);
     });
 
     it("should call [getScraperConfig] to get file save path for part numbers", () => {
@@ -752,7 +754,7 @@ describe("ScraperRepository", () => {
 
     it("should call [writeFileSync] with correct params", () => {
       // arrange
-      const expectedFileName = `2018-12-24 10:33.csv`;
+      const expectedFileName = `2018-12-24 07-12-00.csv`;
       getScraperConfigStub.returns(new Right(scraperConfig));
 
       // act
