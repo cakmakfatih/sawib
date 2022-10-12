@@ -10,26 +10,26 @@ const mockRepository = stubInterface<ScraperRepository>();
 const usecase: ISavePartNumbersAsCsv = (params: SavePartNumbersAsCsvParams) => SavePartNumbersAsCsv(mockRepository, params);
 
 describe("SavePartNumbersAsCsv", () => {
-  it("should call [ScraperRepository.savePartNumbersAsCsv] once with correct params", async () => {
+  it("should call [ScraperRepository.savePartNumbersAsCsv] once with correct params", () => {
     // arrange
     const params: SavePartNumbersAsCsvParams = ["test-url"];
 
     // act
-    await usecase(params);
+    usecase(params);
 
     // assert
     ok(mockRepository.savePartNumbersAsCsv.calledOnceWith(params));
   });
 
-  it("should return the value retrieved from [ScraperRepository.savePartNumbersAsCsv]", async () => {
+  it("should return the value retrieved from [ScraperRepository.savePartNumbersAsCsv]", () => {
     // arrange
     const params: SavePartNumbersAsCsvParams = ["test-url"];
 
     const repositoryResult: Either<Failure, boolean> = new Right(true);
-    mockRepository.savePartNumbersAsCsv.resolves(repositoryResult);
+    mockRepository.savePartNumbersAsCsv.returns(repositoryResult);
 
     // act
-    const result = await usecase(params);
+    const result = usecase(params);
 
     // assert
     equal(result, repositoryResult);

@@ -10,6 +10,7 @@ import { INewBot } from '../../../bot/domain/usecases/NewBot';
 import { ILaunchBrowser } from '../../../browser/domain/usecases/LaunchBrowser';
 import BotController from '../../../bot/presentation/controllers/BotController';
 import safePromise from '../../../../utils/safePromise';
+import ScraperConfig from '../../domain/entities/ScraperConfig';
 
 export const SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE = "Failed on [LaunchBrowser] call from [ScraperRepository].";
 export const SCRAPER_NEW_BOT_WARNING_MESSAGE = "Failed on [NewBot] call made from [ScraperRepository].";
@@ -194,6 +195,14 @@ class ScraperRepositoryImpl implements ScraperRepository {
   }
 
   savePartNumbersAsCsv(partNumbersArray: string[]): Either<Failure, boolean> {
+    throw new Error('Method not implemented.');
+  }
+
+  setScraperConfig(config: ScraperConfig): Either<Failure, boolean> {
+    throw new Error('Method not implemented.');
+  }
+
+  getScraperConfig(): Either<Failure, ScraperConfig> {
     throw new Error('Method not implemented.');
   }
 }

@@ -9,8 +9,8 @@ const storeKeys = {
 };
 
 export interface ScraperLocalDataSource {
-  getScraperConfig(): Promise<ScraperConfig>;
-  setScraperConfig(config: ScraperConfig): Promise<boolean>;
+  getScraperConfig(): ScraperConfig;
+  setScraperConfig(config: ScraperConfig): boolean;
 }
 
 @injectable()
@@ -26,11 +26,11 @@ class ScraperLocalDataSourceImpl implements ScraperLocalDataSource {
     this.store = store;
   }
 
-  getScraperConfig(): Promise<ScraperConfig> {
+  getScraperConfig(): ScraperConfig {
     throw new Error('Method not implemented.');
   }
 
-  setScraperConfig(config: ScraperConfig): Promise<boolean> {
+  setScraperConfig(config: ScraperConfig): boolean {
     throw new Error('Method not implemented.');
   }
 }
