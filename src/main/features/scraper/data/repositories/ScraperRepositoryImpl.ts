@@ -329,8 +329,11 @@ class ScraperRepositoryImpl implements ScraperRepository {
       await page.fill(Selectors.loginPasswordInp, password);
 
       return new Right(true);
-    } catch (err) {
-      return new Left(new ScraperFailure(SCRAPER_PAGE_FILL_FAILURE, err as Error));
+    } catch (error) {
+      if (error instanceof Error)
+        return new Left(new ScraperFailure(SCRAPER_PAGE_FILL_FAILURE, error));
+
+      return new Left(new ScraperFailure(SCRAPER_PAGE_FILL_FAILURE, new Error("Unexpected error.")));
     }
   }
 }
