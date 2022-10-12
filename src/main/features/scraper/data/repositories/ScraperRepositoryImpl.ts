@@ -284,7 +284,21 @@ class ScraperRepositoryImpl implements ScraperRepository {
   }
 
   savePartNumbersAsCsv(partNumbersArray: string[]): Either<Failure, boolean> {
-    throw new Error('Method not implemented.');
+    this.logger.info("[ScraperRepository.savePartNumbersAsCsv] started.");
+
+    const scraperConfigOrFailure = this.getScraperConfig();
+
+    if (scraperConfigOrFailure.isLeft()) {
+      const scraperConfigFailure = scraperConfigOrFailure.value;
+
+      this.logger.info("[ScraperRepository.savePartNumbersAsCsv] completed with a [Failure].");
+
+      return new Left(scraperConfigFailure);
+    }
+
+    this.logger.info("[ScraperRepository.savePartNumbersAsCsv] completed.");
+
+    return new Right(true);
   }
 
   setScraperConfig(config: ScraperConfig): Either<Failure, boolean> {

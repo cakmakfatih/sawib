@@ -11,6 +11,8 @@ import BotController from '../../../../../../main/features/bot/presentation/cont
 import { Page, Locator } from 'playwright-firefox';
 import jsdom from 'jsdom';
 import ScraperConfig from '../../../../../../main/features/scraper/domain/entities/ScraperConfig';
+import fs from 'fs';
+import path from 'path';
 
 const document = new jsdom.JSDOM().window.document;
 
@@ -668,6 +670,81 @@ describe("ScraperRepository", () => {
   });
 
   describe("savePartNumbersAsCsv", () => {
-    it("", async () => { });
+    let writeFileSyncStub: sinon.SinonStub;
+    let getScraperConfigStub: sinon.SinonStub;
+
+    let successfulCsvResult: string;
+    let partNumbersData: string[];
+    let scraperConfig: ScraperConfig;
+
+    beforeAll(() => {
+      getScraperConfigStub = sinon.stub(repository, "getScraperConfig");
+      writeFileSyncStub = sinon.stub(fs, 'writeFileSync');
+
+      successfulCsvResult = fs.readFileSync(path.join(__dirname, "..", "..", "..", "..", "..", "static", "scrapePartNumbersResult.csv"), "utf-8")
+      partNumbersData = [
+        "521596A-940",
+        "52156600 70",
+        "**report **",
+        "**report **",
+        "8156160B70"
+      ];
+      scraperConfig = {
+        partsCheckCredentials: {
+          username: "test-username",
+          password: "test-password",
+        },
+        partNumberSavePath: "test-path",
+      };
+    });
+
+    beforeEach(() => {
+      mockLogger.info.resetHistory();
+      getScraperConfigStub.resetHistory();
+      writeFileSyncStub.resetHistory();
+    });
+
+    it("should call [Logger.info] correctly", () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+
+      // act
+      repository.savePartNumbersAsCsv(partNumbersData);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.savePartNumbersAsCsv] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.savePartNumbersAsCsv] completed."));
+      equal(mockLogger.info.callCount, 2);
+    });
+
+    it("should call [getScraperConfig] to get file save path for part numbers", () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+
+      // act
+      repository.savePartNumbersAsCsv(partNumbersData);
+
+      // assert
+      ok(getScraperConfigStub.calledOnceWith());
+    });
+
+    it("should return [Failure] if [getScraperConfig] returns a Failure", () => {
+      // arrange
+      const err = new Error("test-err");
+      const expectedFailure = new ScraperFailure("test-failure", err);
+      getScraperConfigStub.returns(new Left(expectedFailure));
+
+      // act
+      const result = repository.savePartNumbersAsCsv(partNumbersData);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.savePartNumbersAsCsv] completed with a [Failure]."));
+      deepEqual(result, new Left(expectedFailure));
+    });
+
+    afterAll(() => {
+      writeFileSyncStub.restore();
+      getScraperConfigStub.restore();
+    });
   });
 });

@@ -11,6 +11,7 @@ class Tokens {
   static log4js = Symbol.for("external.log4js");
   static firefox = Symbol.for("external.firefox");
   static electronStore = Symbol.for("external.electronStore");
+  static fs = Symbol.for("external.fs");
 }
 
 export default Tokens;
