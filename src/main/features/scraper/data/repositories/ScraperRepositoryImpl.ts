@@ -21,13 +21,14 @@ export const SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE = "Failed while running [pa
 
 export const SCRAPER_ELEMENT_HANDLES_FAILURE = "Failed while running [<locator>.elementHandles].";
 export const SCRAPER_GET_ATTRIBUTE_FAILURE = "Failed while running [<element>.getAttribute].";
+export const SCRAPER_PAGE_FILL_FAILURE = "Failed while running [<page>.fill].";
 
 export const PARTS_CHECK_LOGIN_URL = "https://partscheck.com.au/global/login.php";
 
 export enum Selectors {
   partNumberInp = ".partNr",
   loginUsernameInp = "#myuser",
-  loginPassInp = "#mypass",
+  loginPasswordInp = "#mypass",
 }
 
 @injectable()
@@ -222,6 +223,27 @@ class ScraperRepositoryImpl implements ScraperRepository {
       return new Left(new ScraperFailure(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, navigationErr));
     }
 
+    const scraperConfig = scraperConfigOrFailure.value;
+
+    const filledInputsOrFailed = await this.fillCredentialInputs({
+      page,
+      username: scraperConfig.partsCheckCredentials.username,
+      password: scraperConfig.partsCheckCredentials.password,
+    });
+
+    if (filledInputsOrFailed.isLeft()) {
+      await page.close();
+
+      const fillInputFailure: ScraperFailure = filledInputsOrFailed.value;
+      const fillInputErr = fillInputFailure.error;
+
+      this.logger.info("[ScraperRepository.loginToPartsCheck] completed with a [Failure].");
+      this.logger.warn(SCRAPER_PAGE_FILL_FAILURE);
+      this.logger.error(fillInputErr!);
+
+      return new Left(new ScraperFailure(SCRAPER_PAGE_FILL_FAILURE, fillInputErr));
+    }
+
     this.logger.info("[ScraperRepository.loginToPartsCheck] completed.");
 
     return new Left(new Failure(""));
@@ -237,6 +259,17 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
   getScraperConfig(): Either<Failure, ScraperConfig> {
     throw new Error('Method not implemented.');
+  }
+
+  private async fillCredentialInputs({ page, username, password }: { page: Page; username: string; password: string; }): Promise<Either<Failure, boolean>> {
+    try {
+      await page.fill(Selectors.loginUsernameInp, username);
+      await page.fill(Selectors.loginPasswordInp, password);
+
+      return new Right(true);
+    } catch (err) {
+      return new Left(new ScraperFailure(SCRAPER_PAGE_FILL_FAILURE, err as Error));
+    }
   }
 }
 
