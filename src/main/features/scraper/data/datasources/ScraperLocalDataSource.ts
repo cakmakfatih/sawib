@@ -2,15 +2,15 @@ import Logger from '../../../../core/Logger';
 import { inject, injectable } from 'tsyringe';
 import Tokens from '../../../../bin/Tokens';
 import Store from 'electron-store';
-import PartsCheckCredentials from '../../domain/entities/PartsCheckCredentials';
+import ScraperConfig from '../../domain/entities/ScraperConfig';
 
 const storeKeys = {
-  partsCheckCredentials: "PARTS_CHECK_CREDENTIALS",
+  config: "CONFIG",
 };
 
 export interface ScraperLocalDataSource {
-  getPartsCheckCredentials(): Promise<PartsCheckCredentials>;
-  setPartsCheckCredentials(credentials: PartsCheckCredentials): Promise<boolean>;
+  getScraperConfig(): Promise<ScraperConfig>;
+  setScraperConfig(config: ScraperConfig): Promise<boolean>;
 }
 
 @injectable()
@@ -26,11 +26,11 @@ class ScraperLocalDataSourceImpl implements ScraperLocalDataSource {
     this.store = store;
   }
 
-  getPartsCheckCredentials(): Promise<PartsCheckCredentials> {
+  getScraperConfig(): Promise<ScraperConfig> {
     throw new Error('Method not implemented.');
   }
 
-  setPartsCheckCredentials(credentials: PartsCheckCredentials): Promise<boolean> {
+  setScraperConfig(config: ScraperConfig): Promise<boolean> {
     throw new Error('Method not implemented.');
   }
 }

@@ -33,7 +33,6 @@ const mockLocator: Locator = stubInterface<Locator>();
 const elementHandlesStub = sinon.stub();
 mockLocator.elementHandles = elementHandlesStub;
 
-
 const pageGoToStub = sinon.stub();
 const pageLocatorStub = sinon.stub();
 
@@ -408,4 +407,6 @@ describe("ScraperRepository", () => {
       deepEqual(result, new Right(expectedResult));
     })
   });
+
+  describe("", () => { });
 });

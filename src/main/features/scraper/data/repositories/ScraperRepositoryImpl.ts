@@ -184,7 +184,9 @@ class ScraperRepositoryImpl implements ScraperRepository {
     await bot.stealthBrowser.context.close();
     await bot.stealthBrowser.browser.close();
 
-    return new Right(true);
+    const partNumberSaveResult = partNumbersSavedOrFailed.value;
+
+    return new Right(partNumberSaveResult);
   }
 
   loginToPartsCheck(page: Page): Promise<Either<Failure, boolean>> {
