@@ -280,7 +280,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
     this.logger.info("[ScraperRepository.loginToPartsCheck] completed.");
 
-    return new Left(new Failure(""));
+    return new Right(true);
   }
 
   savePartNumbersAsCsv(partNumbersArray: string[]): Either<Failure, boolean> {

@@ -646,6 +646,22 @@ describe("ScraperRepository", () => {
       deepEqual(result, new Left(expectedFailure));
     });
 
+    it("should return [Right] if everything ran correctly", async () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+      pageGoToStub.resolves();
+      pageFillStub.resolves();
+      pageClickStub.resolves();
+      pageLocatorStub.returns(mockLocator);
+      waitForStub.resolves();
+
+      // act
+      const result = await repository.loginToPartsCheck(mockPage);
+
+      // assert
+      deepEqual(result, new Right(true));
+    });
+
     afterAll(() => {
       getScraperConfigStub.restore();
     });
