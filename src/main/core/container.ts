@@ -11,10 +11,10 @@ import BrowserRepositoryImpl from '../features/browser/data/repositories/Browser
 import bindDependencies from './utils/bindDependencies';
 import { ILaunchBrowser, LaunchBrowser } from '../features/browser/domain/usecases/LaunchBrowser';
 import { INewPage, NewPage } from '../features/browser/domain/usecases/NewPage';
-import BotRepository from 'main/features/bot/domain/repositories/BotRepository';
-import BotRepositoryImpl from 'main/features/bot/data/repositories/BotRepositoryImpl';
-import { CreatePages, ICreatePages } from 'main/features/bot/domain/usecases/CreatePages';
-import { INewBot, NewBot } from 'main/features/bot/domain/usecases/NewBot';
+import BotRepository from '../features/bot/domain/repositories/BotRepository';
+import BotRepositoryImpl from '../features/bot/data/repositories/BotRepositoryImpl';
+import { CreatePages, ICreatePages } from '../features/bot/domain/usecases/CreatePages';
+import { INewBot, NewBot } from '../features/bot/domain/usecases/NewBot';
 import Store from 'electron-store';
 
 export function initSentry() {
