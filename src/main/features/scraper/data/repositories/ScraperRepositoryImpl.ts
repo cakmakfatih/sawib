@@ -2,7 +2,6 @@ import { Either, Left, Right } from '@typed-f/either';
 import { Failure, ScraperFailure } from '../../../../core/error/failures';
 import { Page, Response } from 'playwright-firefox';
 import ScraperRepository from '../../domain/repositories/ScraperRepository';
-import { ScrapePartNumberParams } from '../../domain/usecases/ScrapePartNumber';
 import { inject, injectable } from 'tsyringe';
 import Tokens from '../../../../bin/Tokens';
 import Logger from '../../../../core/Logger';
@@ -83,7 +82,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
     return new Right(botController);
   }
 
-  async scrapePartNumber(url: ScrapePartNumberParams): Promise<Either<Failure, boolean>> {
+  async scrapePartNumber(url: string): Promise<Either<Failure, boolean>> {
     this.logger.info("[ScraperRepository.scrapePartNumber] started.");
 
     const botOrFailure = await this.launchBotController();
@@ -133,6 +132,10 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
   loginToPartsCheck(page: Page): Promise<Either<Failure, boolean>> {
     throw new Error("Method not implemented.");
+  }
+
+  savePartNumbersAsCsv(partNumbersArray: string[]): Promise<Either<Failure, boolean>> {
+    throw new Error('Method not implemented.');
   }
 }
 
