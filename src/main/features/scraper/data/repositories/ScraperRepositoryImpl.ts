@@ -31,6 +31,8 @@ export const SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE = "Failed while running [<loc
 
 export const FS_WRITE_FILE_SYNC_FAILURE_MESSAGE = "Failed while running [<fs>.writeFileSync] on [ScraperRepository.savePartNumbersAsCsv].";
 
+export const SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE = "Failed while running [<localDataSource>.setScraperConfig].";
+
 export const PARTS_CHECK_LOGIN_URL = "https://partscheck.com.au/global/login.php";
 
 export enum Selectors {
@@ -331,7 +333,18 @@ class ScraperRepositoryImpl implements ScraperRepository {
   setScraperConfig(config: ScraperConfig): Either<Failure, boolean> {
     this.logger.info("[ScraperRepository.setScraperConfig] started.");
 
-    this.localDataSource.setScraperConfig(config);
+    const savedOrFailed = safeCall<boolean>(() => this.localDataSource.setScraperConfig(config));
+
+    if (savedOrFailed.isLeft()) {
+      const setScraperConfigErr = savedOrFailed.value;
+
+      this.logger.warn(SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE);
+      this.logger.error(setScraperConfigErr);
+
+      this.logger.info("[ScraperRepository.setScraperConfig] completed with a [Failure].");
+
+      return new Left(new ScraperFailure(SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE, setScraperConfigErr));
+    }
 
     this.logger.info("[ScraperRepository.setScraperConfig] completed.");
 
