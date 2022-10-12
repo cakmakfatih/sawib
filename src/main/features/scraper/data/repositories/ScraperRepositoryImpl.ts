@@ -1,6 +1,6 @@
 import { Either, Left, Right } from '@typed-f/either';
 import { Failure, ScraperFailure } from '../../../../core/error/failures';
-import { Page, Response } from 'playwright-firefox';
+import { Page, Response, ElementHandle } from 'playwright-firefox';
 import ScraperRepository from '../../domain/repositories/ScraperRepository';
 import { inject, injectable } from 'tsyringe';
 import Tokens from '../../../../bin/Tokens';
@@ -17,6 +17,9 @@ export const SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE = "Failed on [Bot
 
 export const SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE = "Failed on [BotRepository.loginToPartsCheck].";
 export const SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE = "Failed while running [page.goto] method.";
+
+export const SCRAPER_ELEMENT_HANDLES_FAILURE = "Failed while running [<locator>.elementHandles].";
+export const SCRAPER_GET_ATTRIBUTE_FAILURE = "Failed while running [<element>.getAttribute].";
 
 export enum Selectors {
   partNumberInp = ".partNr",
@@ -123,19 +126,65 @@ class ScraperRepositoryImpl implements ScraperRepository {
     }
 
     const partNumbersLocator = page.locator(Selectors.partNumberInp);
-    const partNumberInpElements = await partNumbersLocator.elementHandles();
+    const partNumberInpElementsOrFailure = await safePromise<ElementHandle<Node>[]>(() => partNumbersLocator.elementHandles());
+
+    if (partNumberInpElementsOrFailure.isLeft()) {
+      await bot.stealthBrowser.context.close();
+      await bot.stealthBrowser.browser.close();
+
+      const elementHandlesErr = partNumberInpElementsOrFailure.value;
+
+      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+      this.logger.warn(SCRAPER_ELEMENT_HANDLES_FAILURE);
+      this.logger.error(elementHandlesErr);
+
+      return new Left(new ScraperFailure(SCRAPER_ELEMENT_HANDLES_FAILURE, elementHandlesErr));
+    }
+
+    const partNumberInpElements = partNumberInpElementsOrFailure.value;
 
     const partNumberValues: string[] = [];
 
     for (let partNumberInp of partNumberInpElements) {
-      partNumberValues.push(await partNumberInp.getAttribute("value") ?? "");
+      const partNumberOrFailure = await safePromise<string | null>(() => partNumberInp.getAttribute("value"));
+
+      if (partNumberOrFailure.isLeft()) {
+        await bot.stealthBrowser.context.close();
+        await bot.stealthBrowser.browser.close();
+
+        const getAttributeErr = partNumberOrFailure.value;
+
+        this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+        this.logger.warn(SCRAPER_GET_ATTRIBUTE_FAILURE);
+        this.logger.error(getAttributeErr);
+
+        return new Left(new ScraperFailure(SCRAPER_GET_ATTRIBUTE_FAILURE, getAttributeErr));
+      }
+
+      const partNumber = partNumberOrFailure.value;
+
+      partNumberValues.push(partNumber ?? "");
     }
 
-    this.savePartNumbersAsCsv(partNumberValues);
+    const partNumbersSavedOrFailed = this.savePartNumbersAsCsv(partNumberValues);
+
+    if (partNumbersSavedOrFailed.isLeft()) {
+      const failure = partNumbersSavedOrFailed.value;
+
+      await bot.stealthBrowser.context.close();
+      await bot.stealthBrowser.browser.close();
+
+      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+
+      return new Left(failure);
+    }
 
     this.logger.info("[ScraperRepository.scrapePartNumber] completed.");
 
-    return new Left(new Failure(""));
+    await bot.stealthBrowser.context.close();
+    await bot.stealthBrowser.browser.close();
+
+    return new Right(true);
   }
 
   loginToPartsCheck(page: Page): Promise<Either<Failure, boolean>> {
