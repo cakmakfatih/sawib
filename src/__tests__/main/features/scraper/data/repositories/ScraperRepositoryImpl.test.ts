@@ -1,6 +1,6 @@
 import Logger from '../../../../../../main/core/Logger';
 import sinon, { stubInterface } from 'ts-sinon';
-import ScraperRepositoryImpl, { PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE, SCRAPER_GET_ATTRIBUTE_FAILURE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE, SCRAPER_PAGE_FILL_FAILURE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
+import ScraperRepositoryImpl, { FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, SCRAPER_PAGE_FILL_FAILURE_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
 import ScraperLocalDataSource from '../../../../../../main/features/scraper/data/datasources/ScraperLocalDataSource';
 import { deepEqual, equal, ok } from 'assert';
 import { ScrapePartNumberParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumber';
@@ -321,7 +321,7 @@ describe("ScraperRepository", () => {
       pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
       const err = new Error("test-err");
-      const expectedFailure = new ScraperFailure(SCRAPER_ELEMENT_HANDLES_FAILURE, err);
+      const expectedFailure = new ScraperFailure(SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, err);
       elementHandlesStub.rejects(err);
 
       // act
@@ -354,7 +354,7 @@ describe("ScraperRepository", () => {
       const err = new Error("test-err");
       getAttributeStub.rejects(err);
       elementHandlesStub.rejects(err);
-      const expectedFailure = new ScraperFailure(SCRAPER_GET_ATTRIBUTE_FAILURE, err);
+      const expectedFailure = new ScraperFailure(SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, err);
 
       const nodes = [
         node,
@@ -543,7 +543,7 @@ describe("ScraperRepository", () => {
       getScraperConfigStub.returns(new Right(scraperConfig));
       pageGoToStub.resolves();
       const err = new Error("test-err");
-      const failure = new ScraperFailure(SCRAPER_PAGE_FILL_FAILURE, err);
+      const failure = new ScraperFailure(SCRAPER_PAGE_FILL_FAILURE_MESSAGE, err);
       pageFillStub.rejects(err);
 
       // act
@@ -578,7 +578,7 @@ describe("ScraperRepository", () => {
       pageGoToStub.resolves();
       pageFillStub.resolves();
       const err = new Error("test-err");
-      const failure = new ScraperFailure(SCRAPER_PAGE_CLICK_FAILURE, err);
+      const failure = new ScraperFailure(SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, err);
       pageClickStub.rejects(err);
 
       // act
@@ -633,7 +633,7 @@ describe("ScraperRepository", () => {
       pageLocatorStub.returns(mockLocator);
 
       const err = new Error("test-err");
-      const expectedFailure = new ScraperFailure(SCRAPER_PAGE_WAIT_FOR_FAILURE, err);
+      const expectedFailure = new ScraperFailure(SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, err);
       waitForStub.rejects(err);
 
       // act
@@ -762,6 +762,24 @@ describe("ScraperRepository", () => {
 
       // assert
       writeFileSyncStub.calledOnceWith(path.join(scraperConfig.partNumberSavePath, expectedFileName), successfulCsvResult, { encoding: "utf-8" });
+    });
+
+    it("should return [Failure] and log correctly if [writeFileSync] fails", () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+
+      const err = new Error("test-err");
+      writeFileSyncStub.throws(err);
+      const expectedFailure = new ScraperFailure(FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, err);
+
+      // act
+      const result = repository.savePartNumbersAsCsv(partNumbersData);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.savePartNumbersAsCsv] completed with a [Failure]."));
+      ok(mockLogger.warn.calledWith(FS_WRITE_FILE_SYNC_FAILURE_MESSAGE));
+      ok(mockLogger.error.calledWith(err));
+      deepEqual(result, new Left(expectedFailure));
     });
 
     afterAll(() => {

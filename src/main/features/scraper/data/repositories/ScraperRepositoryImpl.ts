@@ -14,6 +14,7 @@ import ScraperConfig from '../../domain/entities/ScraperConfig';
 import fs from 'fs';
 import moment from 'moment';
 import path from 'path';
+import safeCall from '../../../../utils/safeCall';
 
 export const SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE = "Failed on [LaunchBrowser] call from [ScraperRepository].";
 export const SCRAPER_NEW_BOT_WARNING_MESSAGE = "Failed on [NewBot] call made from [ScraperRepository].";
@@ -22,11 +23,13 @@ export const SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE = "Failed on [Bot
 export const SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE = "Failed on [BotRepository.loginToPartsCheck].";
 export const SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE = "Failed while running [page.goto] method.";
 
-export const SCRAPER_ELEMENT_HANDLES_FAILURE = "Failed while running [<locator>.elementHandles].";
-export const SCRAPER_GET_ATTRIBUTE_FAILURE = "Failed while running [<element>.getAttribute].";
-export const SCRAPER_PAGE_FILL_FAILURE = "Failed while running [<page>.fill].";
-export const SCRAPER_PAGE_CLICK_FAILURE = "Failed while running [<page>.click].";
-export const SCRAPER_PAGE_WAIT_FOR_FAILURE = "Failed while running [<locator>.waitFor].";
+export const SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE = "Failed while running [<locator>.elementHandles].";
+export const SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE = "Failed while running [<element>.getAttribute].";
+export const SCRAPER_PAGE_FILL_FAILURE_MESSAGE = "Failed while running [<page>.fill].";
+export const SCRAPER_PAGE_CLICK_FAILURE_MESSAGE = "Failed while running [<page>.click].";
+export const SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE = "Failed while running [<locator>.waitFor].";
+
+export const FS_WRITE_FILE_SYNC_FAILURE_MESSAGE = "Failed while running [<fs>.writeFileSync] on [ScraperRepository.savePartNumbersAsCsv].";
 
 export const PARTS_CHECK_LOGIN_URL = "https://partscheck.com.au/global/login.php";
 
@@ -148,10 +151,10 @@ class ScraperRepositoryImpl implements ScraperRepository {
       const elementHandlesErr = partNumberInpElementsOrFailure.value;
 
       this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
-      this.logger.warn(SCRAPER_ELEMENT_HANDLES_FAILURE);
+      this.logger.warn(SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE);
       this.logger.error(elementHandlesErr);
 
-      return new Left(new ScraperFailure(SCRAPER_ELEMENT_HANDLES_FAILURE, elementHandlesErr));
+      return new Left(new ScraperFailure(SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, elementHandlesErr));
     }
 
     const partNumberInpElements = partNumberInpElementsOrFailure.value;
@@ -168,10 +171,10 @@ class ScraperRepositoryImpl implements ScraperRepository {
         const getAttributeErr = partNumberOrFailure.value;
 
         this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
-        this.logger.warn(SCRAPER_GET_ATTRIBUTE_FAILURE);
+        this.logger.warn(SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE);
         this.logger.error(getAttributeErr);
 
-        return new Left(new ScraperFailure(SCRAPER_GET_ATTRIBUTE_FAILURE, getAttributeErr));
+        return new Left(new ScraperFailure(SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, getAttributeErr));
       }
 
       const partNumber = partNumberOrFailure.value;
@@ -245,10 +248,10 @@ class ScraperRepositoryImpl implements ScraperRepository {
       const fillInputErr = fillInputFailure.error;
 
       this.logger.info("[ScraperRepository.loginToPartsCheck] completed with a [Failure].");
-      this.logger.warn(SCRAPER_PAGE_FILL_FAILURE);
+      this.logger.warn(SCRAPER_PAGE_FILL_FAILURE_MESSAGE);
       this.logger.error(fillInputErr!);
 
-      return new Left(new ScraperFailure(SCRAPER_PAGE_FILL_FAILURE, fillInputErr));
+      return new Left(new ScraperFailure(SCRAPER_PAGE_FILL_FAILURE_MESSAGE, fillInputErr));
     }
 
     const clickedOrFailed = await safePromise<void>(() => page.click(Selectors.loginBtn));
@@ -259,10 +262,10 @@ class ScraperRepositoryImpl implements ScraperRepository {
       const clickErr = clickedOrFailed.value;
 
       this.logger.info("[ScraperRepository.loginToPartsCheck] completed with a [Failure].");
-      this.logger.warn(SCRAPER_PAGE_CLICK_FAILURE);
+      this.logger.warn(SCRAPER_PAGE_CLICK_FAILURE_MESSAGE);
       this.logger.error(clickErr);
 
-      return new Left(new ScraperFailure(SCRAPER_PAGE_CLICK_FAILURE, clickErr));
+      return new Left(new ScraperFailure(SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, clickErr));
     }
 
     const authenticationLocator = page.locator(Selectors.isLoggedIn);
@@ -275,10 +278,10 @@ class ScraperRepositoryImpl implements ScraperRepository {
       const waitForErr = authenticatedOrFailed.value;
 
       this.logger.info("[ScraperRepository.loginToPartsCheck] completed with a [Failure].");
-      this.logger.warn(SCRAPER_PAGE_WAIT_FOR_FAILURE);
+      this.logger.warn(SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE);
       this.logger.error(waitForErr);
 
-      return new Left(new ScraperFailure(SCRAPER_PAGE_WAIT_FOR_FAILURE, waitForErr));
+      return new Left(new ScraperFailure(SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, waitForErr));
     }
 
     this.logger.info("[ScraperRepository.loginToPartsCheck] completed.");
@@ -306,7 +309,17 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
     partNumbers = partNumbers.map((i) => `"${i.replace(/-| /g, "")}"`);
 
-    fs.writeFileSync(pathToSave, partNumbers.join("\n"), { encoding: "utf-8" });
+    const fileSavedOrFailed = safeCall(() => fs.writeFileSync(pathToSave, partNumbers.join("\n"), { encoding: "utf-8" }));
+
+    if (fileSavedOrFailed.isLeft()) {
+      const fsWriteFileSyncErr = fileSavedOrFailed.value;
+
+      this.logger.info("[ScraperRepository.savePartNumbersAsCsv] completed with a [Failure].");
+      this.logger.warn(FS_WRITE_FILE_SYNC_FAILURE_MESSAGE);
+      this.logger.error(fsWriteFileSyncErr);
+
+      return new Left(new ScraperFailure(FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, fsWriteFileSyncErr));
+    }
 
     this.logger.info(`[ScraperRepository.savePartNumbersAsCsv] saved CSV file to ${pathToSave}.`);
 
@@ -331,9 +344,9 @@ class ScraperRepositoryImpl implements ScraperRepository {
       return new Right(true);
     } catch (error) {
       if (error instanceof Error)
-        return new Left(new ScraperFailure(SCRAPER_PAGE_FILL_FAILURE, error));
+        return new Left(new ScraperFailure(SCRAPER_PAGE_FILL_FAILURE_MESSAGE, error));
 
-      return new Left(new ScraperFailure(SCRAPER_PAGE_FILL_FAILURE, new Error("Unexpected error.")));
+      return new Left(new ScraperFailure(SCRAPER_PAGE_FILL_FAILURE_MESSAGE, new Error("Unexpected error.")));
     }
   }
 }
