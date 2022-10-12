@@ -1,6 +1,6 @@
 import Logger from '../../../../../../main/core/Logger';
 import sinon, { stubInterface } from 'ts-sinon';
-import ScraperRepositoryImpl, { PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE, SCRAPER_GET_ATTRIBUTE_FAILURE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE, SCRAPER_PAGE_FILL_FAILURE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
+import ScraperRepositoryImpl, { PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE, SCRAPER_GET_ATTRIBUTE_FAILURE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE, SCRAPER_PAGE_FILL_FAILURE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
 import ScraperLocalDataSource from '../../../../../../main/features/scraper/data/datasources/ScraperLocalDataSource';
 import { deepEqual, equal, ok } from 'assert';
 import { ScrapePartNumberParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumber';
@@ -32,17 +32,22 @@ const mockPage: Page = stubInterface<Page>();
 const mockLocator: Locator = stubInterface<Locator>();
 
 const elementHandlesStub = sinon.stub();
+const waitForStub = sinon.stub();
+
 mockLocator.elementHandles = elementHandlesStub;
+mockLocator.waitFor = waitForStub;
 
 const pageGoToStub = sinon.stub();
 const pageCloseStub = sinon.stub();
 const pageLocatorStub = sinon.stub();
 const pageFillStub = sinon.stub();
+const pageClickStub = sinon.stub();
 
 mockPage.close = pageCloseStub;
 mockPage.goto = pageGoToStub;
 mockPage.locator = pageLocatorStub;
 mockPage.fill = pageFillStub;
+mockPage.click = pageClickStub;
 
 mockBotController.pages = [mockPage];
 mockStealthBrowser.browser.close = closeBrowserSpy;
@@ -435,10 +440,15 @@ describe("ScraperRepository", () => {
 
     beforeEach(() => {
       mockLogger.info.resetHistory();
+      mockLogger.warn.resetHistory();
+      mockLogger.error.resetHistory();
       getScraperConfigStub.resetHistory();
       pageCloseStub.resetHistory();
       pageGoToStub.resetHistory();
       pageFillStub.resetHistory();
+      pageClickStub.resetHistory();
+      pageLocatorStub.resetHistory();
+      waitForStub.resetHistory();
     });
 
     it("should call [Logger.info] correctly", async () => {
@@ -446,6 +456,8 @@ describe("ScraperRepository", () => {
       getScraperConfigStub.returns(new Right(scraperConfig));
       pageGoToStub.resolves();
       pageFillStub.resolves();
+      pageClickStub.resolves();
+      waitForStub.resolves();
 
       // act
       await repository.loginToPartsCheck(mockPage);
@@ -477,6 +489,8 @@ describe("ScraperRepository", () => {
       getScraperConfigStub.returns(new Right(scraperConfig));
       pageGoToStub.resolves();
       pageFillStub.resolves();
+      pageClickStub.resolves();
+      waitForStub.resolves();
 
       // act
       await repository.loginToPartsCheck(mockPage);
@@ -510,6 +524,8 @@ describe("ScraperRepository", () => {
       getScraperConfigStub.returns(new Right(scraperConfig));
       pageGoToStub.resolves();
       pageFillStub.resolves();
+      pageClickStub.resolves();
+      waitForStub.resolves();
 
       // act
       await repository.loginToPartsCheck(mockPage);
@@ -537,6 +553,97 @@ describe("ScraperRepository", () => {
       ok(mockLogger.warn.calledWith(failure.message));
       ok(mockLogger.error.calledWith(err));
       deepEqual(result, new Left(failure));
+    });
+
+    it("should [page.click] with correct params", async () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+      pageGoToStub.resolves();
+      pageFillStub.resolves();
+      pageClickStub.resolves();
+      waitForStub.resolves();
+
+      // act
+      await repository.loginToPartsCheck(mockPage);
+
+      // assert
+      ok(pageClickStub.calledOnceWith(Selectors.loginBtn));
+    });
+
+    it("should return [Failure] if [page.click] rejects", async () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+      pageGoToStub.resolves();
+      pageFillStub.resolves();
+      const err = new Error("test-err");
+      const failure = new ScraperFailure(SCRAPER_PAGE_CLICK_FAILURE, err);
+      pageClickStub.rejects(err);
+
+      // act
+      const result = await repository.loginToPartsCheck(mockPage);
+
+      // assert
+      ok(pageCloseStub.calledOnceWith());
+      ok(mockLogger.info.calledWith("[ScraperRepository.loginToPartsCheck] completed with a [Failure]."));
+      ok(mockLogger.warn.calledWith(failure.message));
+      ok(mockLogger.error.calledWith(err));
+      deepEqual(result, new Left(failure));
+    });
+
+    it("should call [page.locator] with correct params to locate authentication verification", async () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+      pageGoToStub.resolves();
+      pageFillStub.resolves();
+      pageClickStub.resolves();
+      pageLocatorStub.returns(mockLocator);
+      waitForStub.resolves();
+
+      // act
+      await repository.loginToPartsCheck(mockPage);
+
+      // assert
+      ok(pageLocatorStub.calledOnceWith(Selectors.isLoggedIn));
+    });
+
+    it("should call [<locator>.waitForStub] with correct params on authentication verification element", async () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+      pageGoToStub.resolves();
+      pageFillStub.resolves();
+      pageClickStub.resolves();
+      pageLocatorStub.returns(mockLocator);
+      waitForStub.resolves();
+
+      // act
+      await repository.loginToPartsCheck(mockPage);
+
+      // assert
+      ok(waitForStub.calledOnceWith({ state: "visible" }));
+    });
+
+    it("should log correctly return a [Failure] if [<locator>.waitFor] rejects", async () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+      pageGoToStub.resolves();
+      pageFillStub.resolves();
+      pageClickStub.resolves();
+      pageLocatorStub.returns(mockLocator);
+
+      const err = new Error("test-err");
+      const expectedFailure = new ScraperFailure(SCRAPER_PAGE_WAIT_FOR_FAILURE, err);
+      waitForStub.rejects(err);
+
+      // act
+      const result = await repository.loginToPartsCheck(mockPage);
+
+      // assert
+      ok(waitForStub.calledOnceWith({ state: "visible" }));
+      ok(pageCloseStub.calledOnceWith());
+      ok(mockLogger.info.calledWith("[ScraperRepository.loginToPartsCheck] completed with a [Failure]."));
+      ok(mockLogger.warn.calledOnceWith(expectedFailure.message));
+      ok(mockLogger.error.calledOnceWith(err));
+      deepEqual(result, new Left(expectedFailure));
     });
 
     afterAll(() => {

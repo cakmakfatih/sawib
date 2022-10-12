@@ -22,6 +22,8 @@ export const SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE = "Failed while running [pa
 export const SCRAPER_ELEMENT_HANDLES_FAILURE = "Failed while running [<locator>.elementHandles].";
 export const SCRAPER_GET_ATTRIBUTE_FAILURE = "Failed while running [<element>.getAttribute].";
 export const SCRAPER_PAGE_FILL_FAILURE = "Failed while running [<page>.fill].";
+export const SCRAPER_PAGE_CLICK_FAILURE = "Failed while running [<page>.click].";
+export const SCRAPER_PAGE_WAIT_FOR_FAILURE = "Failed while running [<locator>.waitFor].";
 
 export const PARTS_CHECK_LOGIN_URL = "https://partscheck.com.au/global/login.php";
 
@@ -29,6 +31,8 @@ export enum Selectors {
   partNumberInp = ".partNr",
   loginUsernameInp = "#myuser",
   loginPasswordInp = "#mypass",
+  loginBtn = "#loginButton",
+  isLoggedIn = "#Xtop-header > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(4) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2) > a:nth-child(1)",
 }
 
 @injectable()
@@ -242,6 +246,36 @@ class ScraperRepositoryImpl implements ScraperRepository {
       this.logger.error(fillInputErr!);
 
       return new Left(new ScraperFailure(SCRAPER_PAGE_FILL_FAILURE, fillInputErr));
+    }
+
+    const clickedOrFailed = await safePromise<void>(() => page.click(Selectors.loginBtn));
+
+    if (clickedOrFailed.isLeft()) {
+      await page.close();
+
+      const clickErr = clickedOrFailed.value;
+
+      this.logger.info("[ScraperRepository.loginToPartsCheck] completed with a [Failure].");
+      this.logger.warn(SCRAPER_PAGE_CLICK_FAILURE);
+      this.logger.error(clickErr);
+
+      return new Left(new ScraperFailure(SCRAPER_PAGE_CLICK_FAILURE, clickErr));
+    }
+
+    const authenticationLocator = page.locator(Selectors.isLoggedIn);
+
+    const authenticatedOrFailed = await safePromise<void>(() => authenticationLocator.waitFor({ state: "visible" }));
+
+    if (authenticatedOrFailed.isLeft()) {
+      await page.close();
+
+      const waitForErr = authenticatedOrFailed.value;
+
+      this.logger.info("[ScraperRepository.loginToPartsCheck] completed with a [Failure].");
+      this.logger.warn(SCRAPER_PAGE_WAIT_FOR_FAILURE);
+      this.logger.error(waitForErr);
+
+      return new Left(new ScraperFailure(SCRAPER_PAGE_WAIT_FOR_FAILURE, waitForErr));
     }
 
     this.logger.info("[ScraperRepository.loginToPartsCheck] completed.");
