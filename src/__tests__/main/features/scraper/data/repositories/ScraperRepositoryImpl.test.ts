@@ -1,6 +1,6 @@
 import Logger from '../../../../../../main/core/Logger';
 import sinon, { stubInterface } from 'ts-sinon';
-import ScraperRepositoryImpl, { SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
+import ScraperRepositoryImpl, { SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
 import ScraperLocalDataSource from '../../../../../../main/features/scraper/data/datasources/ScraperLocalDataSource';
 import { deepEqual, equal, ok } from 'assert';
 import { ScrapePartNumberParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumber';
@@ -8,7 +8,10 @@ import { BotFailure, BrowserFailure, ScraperFailure } from '../../../../../../ma
 import { Left, Right } from '@typed-f/either';
 import StealthBrowser from '../../../../../../main/features/browser/domain/entities/StealthBrowser';
 import BotController from '../../../../../../main/features/bot/presentation/controllers/BotController';
-import { Page } from 'playwright-firefox';
+import { Page, Locator } from 'playwright-firefox';
+import jsdom from 'jsdom';
+
+const document = new jsdom.JSDOM().window.document;
 
 const mockLogger = stubInterface<Logger>();
 const mockLocalDataSource = stubInterface<ScraperLocalDataSource>();
@@ -25,9 +28,17 @@ const closeContextSpy = sinon.spy();
 
 const mockPage: Page = stubInterface<Page>();
 
+const mockLocator: Locator = stubInterface<Locator>();
+
+const elementHandlesStub = sinon.stub();
+mockLocator.elementHandles = elementHandlesStub;
+
+
 const pageGoToStub = sinon.stub();
+const pageLocatorStub = sinon.stub();
 
 mockPage.goto = pageGoToStub;
+mockPage.locator = pageLocatorStub;
 
 mockBotController.pages = [mockPage];
 mockStealthBrowser.browser.close = closeBrowserSpy;
@@ -59,6 +70,8 @@ describe("ScraperRepository", () => {
       mockBotControllerInitialize.resetHistory();
       loginToPartsCheckStub.resetHistory();
       pageGoToStub.resetHistory();
+      pageLocatorStub.resetHistory();
+      elementHandlesStub.resetHistory();
     });
 
     it("should call [Logger.info] correctly", async () => {
@@ -67,6 +80,9 @@ describe("ScraperRepository", () => {
       mockNewBot.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
+      pageGoToStub.resolves();
+      pageLocatorStub.returns(mockLocator);
+      elementHandlesStub.resolves([]);
 
       // act
       const params: ScrapePartNumberParams = "12356";
@@ -139,6 +155,9 @@ describe("ScraperRepository", () => {
       mockNewBot.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
+      pageGoToStub.resolves();
+      pageLocatorStub.returns(mockLocator);
+      elementHandlesStub.resolves([]);
 
       // act
       await repository.scrapePartNumber("test-url");
@@ -174,6 +193,9 @@ describe("ScraperRepository", () => {
       mockNewBot.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
+      pageGoToStub.resolves();
+      pageLocatorStub.returns(mockLocator);
+      elementHandlesStub.resolves([]);
 
       // act
       await repository.scrapePartNumber(urlToScrape);
@@ -205,6 +227,37 @@ describe("ScraperRepository", () => {
       ok(closeContextSpy.calledOnceWith());
       ok(closeBrowserSpy.calledOnceWith());
       deepEqual(result, new Left(failure));
+    });
+
+    it("should call [page.locator] on [partNrSelector] to get all elements", async () => {
+      // arrange
+      const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
+      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
+      mockNewBot.resolves(new Right(mockBotController));
+      mockBotControllerInitialize.resolves(new Right(null));
+      loginToPartsCheckStub.resolves(new Right(true));
+      pageGoToStub.resolves();
+      pageLocatorStub.returns(mockLocator);
+
+      const nodes: Node[] = [];
+
+      const inputCount = Math.floor(Math.random() * 11);
+
+      for (let i = 0; i < inputCount; i++) {
+        const examplePartNumInput = document.createElement("input");
+        examplePartNumInput.setAttribute("value", `partnum-${i}`);
+
+        nodes.push(examplePartNumInput);
+      }
+
+      elementHandlesStub.resolves(nodes as any);
+
+      // act
+      await repository.scrapePartNumber(urlToScrape);
+
+      // assert
+      ok(pageLocatorStub.calledWith(Selectors.partNumberInp));
+      ok(elementHandlesStub.calledOnceWith());
     });
   });
 });

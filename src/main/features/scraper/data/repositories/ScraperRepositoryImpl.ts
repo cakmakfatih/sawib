@@ -19,6 +19,10 @@ export const SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE = "Failed on [Bot
 export const SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE = "Failed on [BotRepository.loginToPartsCheck].";
 export const SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE = "Failed while running [page.goto] method.";
 
+export enum Selectors {
+  partNumberInp = ".partNr",
+}
+
 @injectable()
 class ScraperRepositoryImpl implements ScraperRepository {
   private readonly logger: Logger;
@@ -104,8 +108,6 @@ class ScraperRepositoryImpl implements ScraperRepository {
       return new Left(loggedInOrFailed.value);
     }
 
-    this.logger.info("[ScraperRepository.scrapePartNumber] completed.");
-
     const navigatedToUrlOrFailed = await safePromise<null | Response>(() => page.goto(url));
 
     if (navigatedToUrlOrFailed.isLeft()) {
@@ -120,6 +122,11 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
       return new Left(new ScraperFailure(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, navigationErr));
     }
+
+    const partNumbersLocator = page.locator(Selectors.partNumberInp);
+    await partNumbersLocator.elementHandles();
+
+    this.logger.info("[ScraperRepository.scrapePartNumber] completed.");
 
     return new Left(new Failure(""));
   }
