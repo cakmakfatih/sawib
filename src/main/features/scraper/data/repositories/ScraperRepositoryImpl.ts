@@ -67,7 +67,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
     const stealthBrowserOrFailure = await this.launchBrowser();
 
     if (stealthBrowserOrFailure.isLeft()) {
-      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+      this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
       this.logger.warn(SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE);
 
       return new Left(stealthBrowserOrFailure.value);
@@ -78,7 +78,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
     const botControllerOrFailure = await this.newBot(stealthBrowser);
 
     if (botControllerOrFailure.isLeft()) {
-      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+      this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
       this.logger.warn(SCRAPER_NEW_BOT_WARNING_MESSAGE);
 
       await stealthBrowser.context.close();
@@ -92,7 +92,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
     const initializedOrFailed = await botController.initialize();
 
     if (initializedOrFailed.isLeft()) {
-      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+      this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
       this.logger.warn(SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE);
 
       await stealthBrowser.context.close();
@@ -104,8 +104,8 @@ class ScraperRepositoryImpl implements ScraperRepository {
     return new Right(botController);
   }
 
-  async scrapePartNumber(url: string): Promise<Either<Failure, boolean>> {
-    this.logger.info("[ScraperRepository.scrapePartNumber] started.");
+  async scrapePartNumbers(url: string): Promise<Either<Failure, boolean>> {
+    this.logger.info("[ScraperRepository.scrapePartNumbers] started.");
 
     const botOrFailure = await this.launchBotController();
 
@@ -123,7 +123,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
       await bot.stealthBrowser.context.close();
       await bot.stealthBrowser.browser.close();
 
-      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+      this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
       this.logger.warn(SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE);
 
       return new Left(loggedInOrFailed.value);
@@ -137,7 +137,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
       const navigationErr = navigatedToUrlOrFailed.value;
 
-      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+      this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
       this.logger.warn(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE);
       this.logger.error(navigationErr);
 
@@ -153,7 +153,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
       const elementHandlesErr = partNumberInpElementsOrFailure.value;
 
-      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+      this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
       this.logger.warn(SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE);
       this.logger.error(elementHandlesErr);
 
@@ -173,7 +173,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
         const getAttributeErr = partNumberOrFailure.value;
 
-        this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+        this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
         this.logger.warn(SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE);
         this.logger.error(getAttributeErr);
 
@@ -193,7 +193,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
       await bot.stealthBrowser.context.close();
       await bot.stealthBrowser.browser.close();
 
-      this.logger.info("[ScraperRepository.scrapePartNumber] completed with a [Failure].");
+      this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
 
       return new Left(failure);
     }
@@ -203,7 +203,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
     const partNumberSaveResult = partNumbersSavedOrFailed.value;
 
-    this.logger.info("[ScraperRepository.scrapePartNumber] completed.");
+    this.logger.info("[ScraperRepository.scrapePartNumbers] completed.");
 
     return new Right(partNumberSaveResult);
   }

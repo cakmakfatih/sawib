@@ -23,7 +23,7 @@ import ScraperRepositoryImpl from '../features/scraper/data/repositories/Scraper
 import { GetScraperConfig, IGetScraperConfig } from '../features/scraper/domain/usecases/GetScraperConfig';
 import { ILoginToPartsCheck, LoginToPartsCheck } from '../features/scraper/domain/usecases/LoginToPartsCheck';
 import { ISavePartNumbersAsCsv, SavePartNumbersAsCsv } from '../features/scraper/domain/usecases/SavePartNumbersAsCsv';
-import { IScrapePartNumber, ScrapePartNumber } from '../features/scraper/domain/usecases/ScrapePartNumber';
+import { IScrapePartNumbers, ScrapePartNumbers } from '../features/scraper/domain/usecases/ScrapePartNumbers';
 import { ISetScraperConfig, SetScraperConfig } from '../features/scraper/domain/usecases/SetScraperConfig';
 
 export function initSentry() {
@@ -91,8 +91,8 @@ export function initScraper() {
   container.register<ISavePartNumbersAsCsv>(Tokens.savePartNumbersAsCsv, {
     useValue: bindDependencies(Tokens.scraperRepository, SavePartNumbersAsCsv),
   });
-  container.register<IScrapePartNumber>(Tokens.scrapePartNumber, {
-    useValue: bindDependencies(Tokens.scraperRepository, ScrapePartNumber),
+  container.register<IScrapePartNumbers>(Tokens.scrapePartNumbers, {
+    useValue: bindDependencies(Tokens.scraperRepository, ScrapePartNumbers),
   });
   container.register<ISetScraperConfig>(Tokens.setScraperConfig, {
     useValue: bindDependencies(Tokens.scraperRepository, SetScraperConfig),

@@ -3,7 +3,7 @@ import sinon, { stubInterface } from 'ts-sinon';
 import ScraperRepositoryImpl, { FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, SCRAPER_PAGE_FILL_FAILURE_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
 import ScraperLocalDataSource from '../../../../../../main/features/scraper/data/datasources/ScraperLocalDataSource';
 import { deepEqual, equal, ok } from 'assert';
-import { ScrapePartNumberParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumber';
+import { ScrapePartNumbersParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumbers';
 import { BotFailure, BrowserFailure, ScraperFailure } from '../../../../../../main/core/error/failures';
 import { Left, Right } from '@typed-f/either';
 import StealthBrowser from '../../../../../../main/features/browser/domain/entities/StealthBrowser';
@@ -63,7 +63,7 @@ const repository = new ScraperRepositoryImpl(
 );
 
 describe("ScraperRepository", () => {
-  describe("scrapePartNumber", () => {
+  describe("scrapePartNumbers", () => {
     let loginToPartsCheckStub: sinon.SinonStub;
     let savePartNumbersAsCsv: sinon.SinonStub;
 
@@ -100,12 +100,12 @@ describe("ScraperRepository", () => {
       savePartNumbersAsCsv.returns(new Right(true));
 
       // act
-      const params: ScrapePartNumberParams = "12356";
-      await repository.scrapePartNumber(params);
+      const params: ScrapePartNumbersParams = "12356";
+      await repository.scrapePartNumbers(params);
 
       // assert
-      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] started."));
-      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] completed."));
       equal(mockLogger.info.callCount, 2);
     });
 
@@ -116,10 +116,10 @@ describe("ScraperRepository", () => {
       mockLaunchBrowser.resolves(new Left(browserFailure));
 
       // act
-      const result = await repository.scrapePartNumber("test-url");
+      const result = await repository.scrapePartNumbers("test-url");
 
       // assert
-      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] completed with a [Failure]."));
       ok(mockLogger.warn.calledOnceWith(SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE));
       ok(mockLaunchBrowser.calledOnceWith());
       deepEqual(result, new Left(browserFailure));
@@ -133,10 +133,10 @@ describe("ScraperRepository", () => {
       mockNewBot.resolves(new Left(botFailure));
 
       // act
-      const result = await repository.scrapePartNumber("test-url");
+      const result = await repository.scrapePartNumbers("test-url");
 
       // assert
-      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] completed with a [Failure]."));
       ok(mockLogger.warn.calledOnceWith(SCRAPER_NEW_BOT_WARNING_MESSAGE));
       ok(closeContextSpy.calledOnceWith());
       ok(closeBrowserSpy.calledOnceWith());
@@ -153,10 +153,10 @@ describe("ScraperRepository", () => {
       mockBotControllerInitialize.resolves(new Left(botFailure));
 
       // act
-      const result = await repository.scrapePartNumber("test-url");
+      const result = await repository.scrapePartNumbers("test-url");
 
       // assert
-      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] completed with a [Failure]."));
       ok(mockLogger.warn.calledOnceWith(SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE));
       ok(closeContextSpy.calledOnceWith());
       ok(closeBrowserSpy.calledOnceWith());
@@ -175,7 +175,7 @@ describe("ScraperRepository", () => {
       elementHandlesStub.resolves([]);
 
       // act
-      await repository.scrapePartNumber("test-url");
+      await repository.scrapePartNumbers("test-url");
 
       // assert
       ok(loginToPartsCheckStub.calledOnceWith(mockBotController.pages[0]));
@@ -192,13 +192,13 @@ describe("ScraperRepository", () => {
       loginToPartsCheckStub.resolves(new Left(scraperFailure));
 
       // act
-      const result = await repository.scrapePartNumber("test-url");
+      const result = await repository.scrapePartNumbers("test-url");
 
       // assert
       deepEqual(result, new Left(scraperFailure));
       ok(closeContextSpy.calledOnceWith());
       ok(closeBrowserSpy.calledOnceWith());
-      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] completed with a [Failure]."));
     });
 
     it("should call [goto] with correct URL to Quotes using one of the [controller.pages]", async () => {
@@ -213,7 +213,7 @@ describe("ScraperRepository", () => {
       elementHandlesStub.resolves([]);
 
       // act
-      await repository.scrapePartNumber(urlToScrape);
+      await repository.scrapePartNumbers(urlToScrape);
 
       // assert
       ok(pageGoToStub.calledOnceWith(urlToScrape));
@@ -232,11 +232,11 @@ describe("ScraperRepository", () => {
       const failure = new ScraperFailure(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, err);
 
       // act
-      const result = await repository.scrapePartNumber(urlToScrape);
+      const result = await repository.scrapePartNumbers(urlToScrape);
 
       // assert
       ok(pageGoToStub.calledOnceWith(urlToScrape));
-      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] completed with a [Failure]."));
       ok(mockLogger.warn.calledWith(failure.message));
       ok(mockLogger.error.calledWith(err));
       ok(closeContextSpy.calledOnceWith());
@@ -268,7 +268,7 @@ describe("ScraperRepository", () => {
       elementHandlesStub.resolves(nodes);
 
       // act
-      await repository.scrapePartNumber(urlToScrape);
+      await repository.scrapePartNumbers(urlToScrape);
 
       // assert
       ok(pageLocatorStub.calledWith(Selectors.partNumberInp));
@@ -305,7 +305,7 @@ describe("ScraperRepository", () => {
       }
 
       // act
-      await repository.scrapePartNumber(urlToScrape);
+      await repository.scrapePartNumbers(urlToScrape);
 
       // assert
       ok(savePartNumbersAsCsv.calledOnceWith(expectedData));
@@ -325,12 +325,12 @@ describe("ScraperRepository", () => {
       elementHandlesStub.rejects(err);
 
       // act
-      const result = await repository.scrapePartNumber(urlToScrape);
+      const result = await repository.scrapePartNumbers(urlToScrape);
 
       // assert
       ok(pageLocatorStub.calledWith(Selectors.partNumberInp));
       ok(elementHandlesStub.calledOnceWith());
-      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] completed with a [Failure]."));
       ok(mockLogger.warn.calledWith(expectedFailure.message));
       ok(mockLogger.error.calledWith(err));
       ok(closeContextSpy.calledOnceWith());
@@ -363,10 +363,10 @@ describe("ScraperRepository", () => {
       elementHandlesStub.resolves(nodes);
 
       // act
-      const result = await repository.scrapePartNumber(urlToScrape);
+      const result = await repository.scrapePartNumbers(urlToScrape);
 
       // assert
-      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] completed with a [Failure]."));
       ok(mockLogger.warn.calledWith(expectedFailure.message));
       ok(mockLogger.error.calledWith(err));
       ok(closeContextSpy.calledOnceWith());
@@ -374,7 +374,7 @@ describe("ScraperRepository", () => {
       deepEqual(result, new Left(expectedFailure));
     });
 
-    it("should log correctly and return a [Failure] if [scrapePartNumber] throws", async () => {
+    it("should log correctly and return a [Failure] if [scrapePartNumbers] throws", async () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
       mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
@@ -388,10 +388,10 @@ describe("ScraperRepository", () => {
       savePartNumbersAsCsv.returns(new Left(savePartNumberFailure));
 
       // act
-      const result = await repository.scrapePartNumber(urlToScrape);
+      const result = await repository.scrapePartNumbers(urlToScrape);
 
       // assert
-      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumber] completed with a [Failure]."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] completed with a [Failure]."));
       ok(closeContextSpy.calledOnceWith());
       ok(closeBrowserSpy.calledOnceWith());
       deepEqual(result, new Left(savePartNumberFailure));
@@ -411,7 +411,7 @@ describe("ScraperRepository", () => {
       const expectedResult = true;
 
       // act
-      const result = await repository.scrapePartNumber(urlToScrape);
+      const result = await repository.scrapePartNumbers(urlToScrape);
 
       // assert
       ok(closeContextSpy.calledOnceWith());

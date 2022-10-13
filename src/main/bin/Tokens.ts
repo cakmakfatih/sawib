@@ -10,7 +10,7 @@ class Tokens {
   static getScraperConfig = Symbol.for("usecase.getScraperConfig");
   static loginToPartsCheck = Symbol.for("usecase.loginToPartsCheck");
   static savePartNumbersAsCsv = Symbol.for("usecase.savePartNumbersAsCsv");
-  static scrapePartNumber = Symbol.for("usecase.scrapePartNumber");
+  static scrapePartNumbers = Symbol.for("usecase.scrapePartNumbers");
   static setScraperConfig = Symbol.for("usecase.setScraperConfig");
   static logger = Symbol.for("core.logger");
   static log4js = Symbol.for("external.log4js");

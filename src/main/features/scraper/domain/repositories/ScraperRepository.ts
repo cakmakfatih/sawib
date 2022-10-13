@@ -4,7 +4,7 @@ import ScraperConfig from '../entities/ScraperConfig';
 import { LoginToPartsCheckParams } from '../usecases/LoginToPartsCheck';
 
 interface ScraperRepository {
-  scrapePartNumber(url: string): Promise<Either<Failure, boolean>>;
+  scrapePartNumbers(url: string): Promise<Either<Failure, boolean>>;
   loginToPartsCheck(params: LoginToPartsCheckParams): Promise<Either<Failure, boolean>>;
   savePartNumbersAsCsv(partNumbersArray: string[]): Either<Failure, boolean>;
   setScraperConfig(config: ScraperConfig): Either<Failure, boolean>;
