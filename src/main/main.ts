@@ -6,7 +6,7 @@ import log from "electron-log";
 import MenuBuilder from "./menu";
 import { resolveHtmlPath } from "./util";
 import init from "./core/container";
-import Bridge from './Bridge';
+import Bridge from './bridge';
 
 require("dotenv").config();
 
