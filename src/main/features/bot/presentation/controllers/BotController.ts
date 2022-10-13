@@ -1,11 +1,12 @@
 import { Page } from 'playwright-firefox';
-import { inject, injectable } from 'tsyringe';
+import { container, inject, injectable } from 'tsyringe';
 import StealthBrowser from '../../../../features/browser/domain/entities/StealthBrowser';
 import { ICreatePages } from '../../domain/usecases/CreatePages';
 import Tokens from '../../../../bin/Tokens';
 import { Failure } from '../../../../core/error/failures';
 import { Either, Left, Right } from '@typed-f/either';
 import Logger from '../../../../core/Logger';
+import safeCall from '../../../../utils/safeCall';
 
 interface BotController {
   initialize(): Promise<Either<Failure, null>>;
@@ -27,8 +28,16 @@ class BotControllerImpl implements BotController {
   ) {
     this.stealthBrowser = stealthBrowser;
 
-    this.logger = logger!;
-    this.createPages = createPages!;
+    const loggerOrFailure = safeCall<Logger>(() => container.resolve(Tokens.logger));
+    const createPagesOrFailure = safeCall<ICreatePages>(() => container.resolve(Tokens.createPages));
+
+    if (loggerOrFailure.isRight() && createPagesOrFailure.isRight()) {
+      this.logger = loggerOrFailure.value;
+      this.createPages = createPagesOrFailure.value;
+    } else {
+      this.logger = logger!;
+      this.createPages = createPages!;
+    }
   }
 
   async initialize(): Promise<Either<Failure, null>> {

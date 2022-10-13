@@ -29,10 +29,11 @@ body {
 
 .inp-default {
   border: 1px solid #ddd;
-  border-radius: 3px;
-  padding: 5px;
+  border-radius: 4px;
+  padding: 0px 10px;
   font-size: 13pt;
   margin-top: 5px;
+  height: 40px;
 }
 
 .btn-default {
@@ -54,4 +55,62 @@ body {
 
 .btn-default:active {
   opacity: .7;
+}
+
+.select-default {
+  outline: none;
+}
+
+.warning {
+  display: flex;
+  padding: 0px 15px;
+  font-weight: 500;
+  display: flex;
+  flex-direction: column;
+}
+
+.warning > p {
+  padding: 0px;
+  margin: 0px;
+}
+
+.lds-ring {
+  display: inline-block;
+  position: relative;
+  width: 20px;
+  height: 20px;
+}
+
+.lds-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  padding-right: 5px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #fff transparent transparent transparent;
+}
+
+.lds-ring div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+
+.lds-ring div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+
+.lds-ring div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+
+@keyframes lds-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

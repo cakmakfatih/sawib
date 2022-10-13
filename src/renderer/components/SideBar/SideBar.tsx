@@ -4,7 +4,8 @@ import "./SideBar.css";
 function SideBar() {
   return (
     <aside className="sidebar">
-      <SideBarItem to="/" text="Scraper" />
+      <SideBarItem to="/" text="Dashboard" />
+      <SideBarItem to="/scraper" text="Scraper" />
       <SideBarItem to="/config" text="Config" />
       <div style={{ flex: 1 }} />
       <SideBarItem to="/settings" text="Settings" />

@@ -3,8 +3,8 @@ import "./SettingsView.css";
 function SettingsView() {
   return (
     <>
-      <section className="config-wrapper">
-        <div className="config-body"></div>
+      <section className="settings-wrapper">
+        This page is not developed yet.
       </section>
     </>
   );

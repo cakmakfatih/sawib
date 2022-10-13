@@ -1,9 +1,12 @@
 import DashboardButton from "renderer/components/DashboardButton/DashboardButton";
 import DataObjectIcon from "@mui/icons-material/DataObject";
-import CompareIcon from "@mui/icons-material/Compare";
 import "./DashboardView.css";
+import { useNavigate } from "react-router-dom";
+import DonutLargeIcon from "@mui/icons-material/DonutLarge";
 
 function DashboardView() {
+  const navigate = useNavigate();
+
   return (
     <>
       <section className="dashboard-wrapper">
@@ -15,18 +18,18 @@ function DashboardView() {
         </header>
         <div className="dashboard-body">
           <DashboardButton
-            icon={<DataObjectIcon />}
+            icon={<DonutLargeIcon />}
             onClick={() => {
-              console.log("test");
+              navigate("/config");
             }}
-            text="Scrape"
+            text="Config"
           />
           <DashboardButton
-            icon={<CompareIcon />}
+            icon={<DataObjectIcon />}
             onClick={() => {
-              console.log("test");
+              navigate("/scraper");
             }}
-            text="Compare"
+            text="Scraper"
           />
         </div>
       </section>

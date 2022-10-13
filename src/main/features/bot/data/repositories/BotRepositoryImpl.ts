@@ -9,8 +9,11 @@ import { BotFailure, BrowserFailure, Failure } from '../../../../core/error/fail
 import { INewPage } from '../../../../features/browser/domain/usecases/NewPage';
 import StealthBrowser from '../../../../features/browser/domain/entities/StealthBrowser';
 import { CONCURRENCY } from '../../../../bin/config';
+import sinon from 'sinon';
 
 export const CREATE_PAGES_FAILURE_MESSAGE = "Failed while creating pages.";
+
+sinon.stub(BotController);
 
 @injectable()
 class BotRepositoryImpl implements BotRepository {
