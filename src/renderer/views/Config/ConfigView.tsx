@@ -4,9 +4,9 @@ import { ipcRenderer } from "electron";
 
 function ConfigView() {
   const browse = async () => {
-    const pathResult = await ipcRenderer.invoke("dialog:openDirectory");
+    // const pathResult = await ipcRenderer.invoke("dialog:openDirectory");
 
-    console.log(pathResult);
+    console.log(ipcRenderer.send("usecase:getScraperConfig"));
   };
 
   const [partsCheckUsername, setPartsCheckUsername] = useState<string>();

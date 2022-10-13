@@ -6,7 +6,7 @@ import log from "electron-log";
 import MenuBuilder from "./menu";
 import { resolveHtmlPath } from "./util";
 import init from "./core/container";
-import './bridge';
+import Bridge from './bridge';
 
 require("dotenv").config();
 
@@ -29,6 +29,7 @@ if (isDebug) {
 
 const createWindow = async () => {
   await init();
+  Bridge.init();
 
   const RESOURCES_PATH = app.isPackaged
     ? path.join(process.resourcesPath, "assets")

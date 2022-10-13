@@ -10,7 +10,7 @@ export const SCRAPER_STORE_KEYS = {
 };
 
 export interface ScraperLocalDataSource {
-  getScraperConfig(): ScraperConfig;
+  getScraperConfig(): ScraperConfig | null;
   setScraperConfig(config: ScraperConfig): boolean;
 }
 
@@ -27,7 +27,7 @@ class ScraperLocalDataSourceImpl implements ScraperLocalDataSource {
     this.store = store;
   }
 
-  getScraperConfig(): ScraperConfig {
+  getScraperConfig(): ScraperConfig | null {
     this.logger.info("[ScraperLocalDataSource.getScraperConfig] started.");
 
     const scraperConfigOrFailure = safeCall(() => this.store.get(SCRAPER_STORE_KEYS.scraperConfig));
@@ -44,6 +44,9 @@ class ScraperLocalDataSourceImpl implements ScraperLocalDataSource {
     const scraperConfig = scraperConfigOrFailure.value;
 
     this.logger.info("[ScraperLocalDataSource.getScraperConfig] completed.");
+
+    if (typeof scraperConfig === "undefined")
+      return null;
 
     return (scraperConfig as ScraperConfig);
   }

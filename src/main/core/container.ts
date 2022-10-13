@@ -143,6 +143,7 @@ async function init() {
   initLogger();
   initBrowser();
   initBot();
+  initScraper();
 }
 
 export default init;
