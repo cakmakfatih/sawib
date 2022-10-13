@@ -4,11 +4,10 @@ import "./SideBar.css";
 function SideBar() {
   return (
     <aside className="sidebar">
-      <SideBarItem isActive onClick={() => {}} text="Dashboard" />
-      <SideBarItem onClick={() => {}} text="Storage" />
-      <SideBarItem onClick={() => {}} text="Data" />
+      <SideBarItem to="/" text="Dashboard" />
+      <SideBarItem to="/config" text="Config" />
       <div style={{ flex: 1 }} />
-      <SideBarItem onClick={() => {}} text="Settings" />
+      <SideBarItem to="/settings" text="Settings" />
     </aside>
   );
 }

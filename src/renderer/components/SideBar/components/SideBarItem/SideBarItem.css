@@ -6,6 +6,8 @@
   cursor: pointer;
   transition: all .2s;
   letter-spacing: 0.04em;
+  text-decoration: none;
+  color: #fff;
 }
 
 .sidebar-item:not(.active):hover {
