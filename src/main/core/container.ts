@@ -16,6 +16,15 @@ import BotRepositoryImpl from '../features/bot/data/repositories/BotRepositoryIm
 import { CreatePages, ICreatePages } from '../features/bot/domain/usecases/CreatePages';
 import { INewBot, NewBot } from '../features/bot/domain/usecases/NewBot';
 import Store from 'electron-store';
+import ScraperLocalDataSource from '../features/scraper/data/datasources/ScraperLocalDataSource';
+import ScraperLocalDataSourceImpl from '../features/scraper/data/datasources/ScraperLocalDataSource';
+import ScraperRepository from '../features/scraper/domain/repositories/ScraperRepository';
+import ScraperRepositoryImpl from '../features/scraper/data/repositories/ScraperRepositoryImpl';
+import { GetScraperConfig, IGetScraperConfig } from '../features/scraper/domain/usecases/GetScraperConfig';
+import { ILoginToPartsCheck, LoginToPartsCheck } from '../features/scraper/domain/usecases/LoginToPartsCheck';
+import { ISavePartNumbersAsCsv, SavePartNumbersAsCsv } from '../features/scraper/domain/usecases/SavePartNumbersAsCsv';
+import { IScrapePartNumber, ScrapePartNumber } from '../features/scraper/domain/usecases/ScrapePartNumber';
+import { ISetScraperConfig, SetScraperConfig } from '../features/scraper/domain/usecases/SetScraperConfig';
 
 export function initSentry() {
   if (typeof process.env.SENTRY_DSN_URL !== "undefined")
@@ -58,6 +67,35 @@ export function initBot() {
   });
   container.register<INewBot>(Tokens.newBot, {
     useValue: bindDependencies(Tokens.botRepository, NewBot),
+  });
+}
+
+export function initScraper() {
+  //! datasources
+  container.register<ScraperLocalDataSource>(Tokens.scraperLocalDataSource, {
+    useClass: ScraperLocalDataSourceImpl,
+  }, { lifecycle: Lifecycle.Singleton });
+
+  //! repositories
+  container.register<ScraperRepository>(Tokens.scraperRepository, {
+    useClass: ScraperRepositoryImpl,
+  }, { lifecycle: Lifecycle.Singleton });
+
+  //! usecases
+  container.register<IGetScraperConfig>(Tokens.getScraperConfig, {
+    useValue: bindDependencies(Tokens.scraperRepository, GetScraperConfig),
+  });
+  container.register<ILoginToPartsCheck>(Tokens.loginToPartsCheck, {
+    useValue: bindDependencies(Tokens.scraperRepository, LoginToPartsCheck),
+  });
+  container.register<ISavePartNumbersAsCsv>(Tokens.savePartNumbersAsCsv, {
+    useValue: bindDependencies(Tokens.scraperRepository, SavePartNumbersAsCsv),
+  });
+  container.register<IScrapePartNumber>(Tokens.scrapePartNumber, {
+    useValue: bindDependencies(Tokens.scraperRepository, ScrapePartNumber),
+  });
+  container.register<ISetScraperConfig>(Tokens.setScraperConfig, {
+    useValue: bindDependencies(Tokens.scraperRepository, SetScraperConfig),
   });
 }
 
