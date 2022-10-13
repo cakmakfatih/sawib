@@ -1,15 +1,11 @@
-import React from "react";
 import DashboardButton from "renderer/components/DashboardButton/DashboardButton";
 import DataObjectIcon from "@mui/icons-material/DataObject";
-import CompareIcon from "@mui/icons-material/Compare";
-import LaunchIcon from "@mui/icons-material/Launch";
 import "./DashboardView.css";
-import { ipcRenderer } from "electron";
+import { useNavigate } from "react-router-dom";
+import DonutLargeIcon from "@mui/icons-material/DonutLarge";
 
 function DashboardView() {
-  const launchBrowser = () => {
-    ipcRenderer.send("launch-browser");
-  };
+  const navigate = useNavigate();
 
   return (
     <>
@@ -22,23 +18,18 @@ function DashboardView() {
         </header>
         <div className="dashboard-body">
           <DashboardButton
-            icon={<LaunchIcon />}
-            onClick={launchBrowser}
-            text="Launch"
+            icon={<DonutLargeIcon />}
+            onClick={() => {
+              navigate("/config");
+            }}
+            text="Config"
           />
           <DashboardButton
             icon={<DataObjectIcon />}
             onClick={() => {
-              console.log("test");
+              navigate("/scraper");
             }}
-            text="Scrape"
-          />
-          <DashboardButton
-            icon={<CompareIcon />}
-            onClick={() => {
-              console.log("test");
-            }}
-            text="Compare"
+            text="Scraper"
           />
         </div>
       </section>

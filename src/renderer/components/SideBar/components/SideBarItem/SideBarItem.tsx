@@ -1,21 +1,17 @@
+import { NavLink } from "react-router-dom";
 import "./SideBarItem.css";
 
-function SideBarItem({
-  onClick,
-  text,
-  isActive,
-}: {
-  onClick: React.MouseEventHandler<HTMLDivElement>;
-  text: string;
-  isActive?: boolean;
-}) {
+function SideBarItem({ text, to }: { text: string; to: string }) {
   return (
-    <div
-      onClick={onClick}
-      className={`sidebar-item${isActive ? " active" : ""}`}
+    <NavLink
+      to={to}
+      end
+      className={({ isActive }) =>
+        isActive ? "sidebar-item active" : "sidebar-item"
+      }
     >
       <span>{text}</span>
-    </div>
+    </NavLink>
   );
 }
 

@@ -101,7 +101,9 @@
     "log4js": "^6.7.0",
     "moment": "^2.29.4",
     "react": "^18.2.0",
+    "react-alert-template-basic": "^1.0.2",
     "react-dom": "^18.2.0",
+    "react-notifications-component": "^4.0.1",
     "react-router-dom": "^6.3.0",
     "reflect-metadata": "^0.1.13",
     "tsyringe": "^4.7.0"
@@ -118,6 +120,7 @@
     "@types/mocha": "^10.0.0",
     "@types/node": "18.7.6",
     "@types/react": "^18.0.17",
+    "@types/react-alert": "^7.0.2",
     "@types/react-dom": "^18.0.6",
     "@types/react-test-renderer": "^18.0.0",
     "@types/terser-webpack-plugin": "^5.0.4",
@@ -180,8 +183,8 @@
     "webpack-merge": "^5.8.0"
   },
   "build": {
-    "productName": "ElectronReact",
-    "appId": "org.erb.ElectronReact",
+    "productName": "SAWIB",
+    "appId": "com.ffhood.SAWIB",
     "asar": true,
     "asarUnpack": "**\\*.{node,dll}",
     "files": [

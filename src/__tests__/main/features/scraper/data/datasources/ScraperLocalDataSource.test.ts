@@ -131,5 +131,16 @@ describe("ScraperLocalDataSource", () => {
       // assert
       equal(result, scraperConfig);
     });
+
+    it("should return [null] if [store.get] value succeeds with [undefined]", () => {
+      // arrange
+      mockStore.get.returns(undefined);
+
+      // act
+      const result = dataSource.getScraperConfig();
+
+      // assert
+      equal(result, null);
+    });
   });
 });

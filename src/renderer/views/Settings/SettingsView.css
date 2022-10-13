@@ -1,0 +1,9 @@
+.settings-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  font-size: 20pt;
+  padding-bottom: 50px;
+  color: #0288d1
+}

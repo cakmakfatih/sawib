@@ -4,10 +4,10 @@ import ScraperConfig from "../entities/ScraperConfig";
 import ScraperRepository from "../repositories/ScraperRepository";
 
 interface IGetScraperConfig {
-  (): Either<Failure, ScraperConfig>;
+  (): Either<Failure, ScraperConfig | null>;
 }
 
-function GetScraperConfig(repository: ScraperRepository): Either<Failure, ScraperConfig> {
+function GetScraperConfig(repository: ScraperRepository): Either<Failure, ScraperConfig | null> {
   return repository.getScraperConfig();
 }
 

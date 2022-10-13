@@ -1,12 +1,12 @@
 import "reflect-metadata";
 import path from "path";
-import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { app, BrowserWindow, shell } from "electron";
 import { autoUpdater } from "electron-updater";
 import log from "electron-log";
-import { firefox } from "playwright-firefox";
 import MenuBuilder from "./menu";
 import { resolveHtmlPath } from "./util";
 import init from "./core/container";
+import Bridge from './bridge';
 
 require("dotenv").config();
 
@@ -20,16 +20,6 @@ class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.on("launch-browser", async () => {
-  const browser = await firefox.launch({
-    headless: false,
-  });
-
-  const page = await browser.newPage();
-
-  await page.goto("https://google.com");
-});
-
 const isDebug =
   process.env.NODE_ENV === "development" || process.env.DEBUG_PROD === "true";
 
@@ -39,6 +29,7 @@ if (isDebug) {
 
 const createWindow = async () => {
   await init();
+  Bridge.init();
 
   const RESOURCES_PATH = app.isPackaged
     ? path.join(process.resourcesPath, "assets")
@@ -50,14 +41,15 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 800,
-    height: 600,
+    width: 790,
+    height: 561,
     icon: getAssetPath("icon.png"),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
       sandbox: false,
     },
+    resizable: false,
     autoHideMenuBar: true,
   });
 
