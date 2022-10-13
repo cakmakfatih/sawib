@@ -1,12 +1,12 @@
 import "reflect-metadata";
 import path from "path";
-import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { app, BrowserWindow, shell } from "electron";
 import { autoUpdater } from "electron-updater";
 import log from "electron-log";
-import { firefox } from "playwright-firefox";
 import MenuBuilder from "./menu";
 import { resolveHtmlPath } from "./util";
 import init from "./core/container";
+import './bridge';
 
 require("dotenv").config();
 
@@ -19,16 +19,6 @@ class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
-
-ipcMain.on("launch-browser", async () => {
-  const browser = await firefox.launch({
-    headless: false,
-  });
-
-  const page = await browser.newPage();
-
-  await page.goto("https://google.com");
-});
 
 const isDebug =
   process.env.NODE_ENV === "development" || process.env.DEBUG_PROD === "true";
