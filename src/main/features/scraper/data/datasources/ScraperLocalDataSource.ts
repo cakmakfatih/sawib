@@ -28,7 +28,24 @@ class ScraperLocalDataSourceImpl implements ScraperLocalDataSource {
   }
 
   getScraperConfig(): ScraperConfig {
-    throw new Error('Method not implemented.');
+    this.logger.info("[ScraperLocalDataSource.getScraperConfig] started.");
+
+    const scraperConfigOrFailure = safeCall(() => this.store.get(SCRAPER_STORE_KEYS.scraperConfig));
+
+    if (scraperConfigOrFailure.isLeft()) {
+      const getResultErr = scraperConfigOrFailure.value;
+
+      this.logger.error(getResultErr);
+      this.logger.info("[ScraperLocalDataSource.getScraperConfig] completed with a [Failure].");
+
+      throw getResultErr;
+    }
+
+    const scraperConfig = scraperConfigOrFailure.value;
+
+    this.logger.info("[ScraperLocalDataSource.getScraperConfig] completed.");
+
+    return (scraperConfig as ScraperConfig);
   }
 
   setScraperConfig(config: ScraperConfig): boolean {
