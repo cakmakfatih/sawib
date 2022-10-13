@@ -117,24 +117,15 @@ export function initExternal() {
     `${moment().utc().format("YYYY-MM-DD HH-MM-SS").toString()}.log`
   );
 
-  if (process.env.NODE_ENV === "prod") {
-    log4js.configure({
-      appenders: {
-        default: { type: "console" },
-      },
-      categories: { default: { appenders: ["default"], level: "info" } },
-    });
-  } else {
-    log4js.configure({
-      appenders: {
-        default: { type: "console", filename: logPath },
-        out: { type: "file", filename: logPath },
-      },
-      categories: {
-        default: { appenders: ["default", "out"], level: "debug" },
-      },
-    });
-  }
+  log4js.configure({
+    appenders: {
+      default: { type: "console", filename: logPath },
+      out: { type: "file", filename: logPath },
+    },
+    categories: {
+      default: { appenders: ["default", "out"], level: "debug" },
+    },
+  });
 
   container.registerInstance<log4js.Logger>(Tokens.log4js, logger);
 }

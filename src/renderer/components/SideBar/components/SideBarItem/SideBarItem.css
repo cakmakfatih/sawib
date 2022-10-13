@@ -21,4 +21,5 @@
 .sidebar-item.active {
   background-color: #fff;
   color: #303030;
+  cursor: default;
 }

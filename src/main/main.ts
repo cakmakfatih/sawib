@@ -50,14 +50,15 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 960,
-    height: 600,
+    width: 790,
+    height: 561,
     icon: getAssetPath("icon.png"),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
       sandbox: false,
     },
+    resizable: false,
     autoHideMenuBar: true,
   });
 

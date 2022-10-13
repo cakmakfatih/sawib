@@ -1,16 +1,9 @@
-import React from "react";
 import DashboardButton from "renderer/components/DashboardButton/DashboardButton";
 import DataObjectIcon from "@mui/icons-material/DataObject";
 import CompareIcon from "@mui/icons-material/Compare";
-import LaunchIcon from "@mui/icons-material/Launch";
 import "./DashboardView.css";
-import { ipcRenderer } from "electron";
 
 function DashboardView() {
-  const launchBrowser = () => {
-    ipcRenderer.send("launch-browser");
-  };
-
   return (
     <>
       <section className="dashboard-wrapper">
@@ -21,11 +14,6 @@ function DashboardView() {
           </span>
         </header>
         <div className="dashboard-body">
-          <DashboardButton
-            icon={<LaunchIcon />}
-            onClick={launchBrowser}
-            text="Launch"
-          />
           <DashboardButton
             icon={<DataObjectIcon />}
             onClick={() => {
