@@ -700,7 +700,7 @@ describe("ScraperRepository", () => {
     });
 
     beforeEach(() => {
-      const fakeDate = new Date(2018, 11, 24, 10, 33, 30, 0);
+      const fakeDate = new Date(Date.UTC(2018, 11, 24, 7, 12, 0, 0));
       clock = sinon.useFakeTimers(fakeDate);
 
       mockLogger.info.resetHistory();
