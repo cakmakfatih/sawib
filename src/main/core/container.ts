@@ -11,10 +11,20 @@ import BrowserRepositoryImpl from '../features/browser/data/repositories/Browser
 import bindDependencies from './utils/bindDependencies';
 import { ILaunchBrowser, LaunchBrowser } from '../features/browser/domain/usecases/LaunchBrowser';
 import { INewPage, NewPage } from '../features/browser/domain/usecases/NewPage';
-import BotRepository from 'main/features/bot/domain/repositories/BotRepository';
-import BotRepositoryImpl from 'main/features/bot/data/repositories/BotRepositoryImpl';
-import { CreatePages, ICreatePages } from 'main/features/bot/domain/usecases/CreatePages';
-import { INewBot, NewBot } from 'main/features/bot/domain/usecases/NewBot';
+import BotRepository from '../features/bot/domain/repositories/BotRepository';
+import BotRepositoryImpl from '../features/bot/data/repositories/BotRepositoryImpl';
+import { CreatePages, ICreatePages } from '../features/bot/domain/usecases/CreatePages';
+import { INewBot, NewBot } from '../features/bot/domain/usecases/NewBot';
+import Store from 'electron-store';
+import ScraperLocalDataSource from '../features/scraper/data/datasources/ScraperLocalDataSource';
+import ScraperLocalDataSourceImpl from '../features/scraper/data/datasources/ScraperLocalDataSource';
+import ScraperRepository from '../features/scraper/domain/repositories/ScraperRepository';
+import ScraperRepositoryImpl from '../features/scraper/data/repositories/ScraperRepositoryImpl';
+import { GetScraperConfig, IGetScraperConfig } from '../features/scraper/domain/usecases/GetScraperConfig';
+import { ILoginToPartsCheck, LoginToPartsCheck } from '../features/scraper/domain/usecases/LoginToPartsCheck';
+import { ISavePartNumbersAsCsv, SavePartNumbersAsCsv } from '../features/scraper/domain/usecases/SavePartNumbersAsCsv';
+import { IScrapePartNumbers, ScrapePartNumbers } from '../features/scraper/domain/usecases/ScrapePartNumbers';
+import { ISetScraperConfig, SetScraperConfig } from '../features/scraper/domain/usecases/SetScraperConfig';
 
 export function initSentry() {
   if (typeof process.env.SENTRY_DSN_URL !== "undefined")
@@ -60,9 +70,43 @@ export function initBot() {
   });
 }
 
+export function initScraper() {
+  //! datasources
+  container.register<ScraperLocalDataSource>(Tokens.scraperLocalDataSource, {
+    useClass: ScraperLocalDataSourceImpl,
+  }, { lifecycle: Lifecycle.Singleton });
+
+  //! repositories
+  container.register<ScraperRepository>(Tokens.scraperRepository, {
+    useClass: ScraperRepositoryImpl,
+  }, { lifecycle: Lifecycle.Singleton });
+
+  //! usecases
+  container.register<IGetScraperConfig>(Tokens.getScraperConfig, {
+    useValue: bindDependencies(Tokens.scraperRepository, GetScraperConfig),
+  });
+  container.register<ILoginToPartsCheck>(Tokens.loginToPartsCheck, {
+    useValue: bindDependencies(Tokens.scraperRepository, LoginToPartsCheck),
+  });
+  container.register<ISavePartNumbersAsCsv>(Tokens.savePartNumbersAsCsv, {
+    useValue: bindDependencies(Tokens.scraperRepository, SavePartNumbersAsCsv),
+  });
+  container.register<IScrapePartNumbers>(Tokens.scrapePartNumbers, {
+    useValue: bindDependencies(Tokens.scraperRepository, ScrapePartNumbers),
+  });
+  container.register<ISetScraperConfig>(Tokens.setScraperConfig, {
+    useValue: bindDependencies(Tokens.scraperRepository, SetScraperConfig),
+  });
+}
+
 export function initExternal() {
   //! sentry
   initSentry();
+
+  //! electron-store
+  const store = new Store();
+
+  container.registerInstance<Store>(Tokens.electronStore, store);
 
   //! log4js
   const logger = log4js.getLogger();
