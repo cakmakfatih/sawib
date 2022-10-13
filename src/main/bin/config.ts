@@ -1,9 +1,17 @@
-import AboutConfig from "../features/browser/domain/entities/AboutConfig";
-import StealthBrowserLaunchOptions from "../features/browser/domain/entities/StealthBrowserLaunchOptions";
+import AboutConfig from '../features/browser/domain/entities/AboutConfig';
+import StealthBrowserLaunchOptions from '../features/browser/domain/entities/StealthBrowserLaunchOptions';
+import path from 'path';
 
 export const LAUNCH_TIMEOUT: number = 60000;
 
-export const DEFAULT_LAUNCH_OPTIONS: StealthBrowserLaunchOptions = {
+const BROWSER_PATH_PROD = path.join(__dirname, "..", "..", "..", "firefox", "firefox", "firefox.exe");
+
+export const DEFAULT_LAUNCH_OPTIONS: StealthBrowserLaunchOptions = process.env.NODE_ENV === "development" ? {
+  headless: true,
+  timeout: LAUNCH_TIMEOUT,
+  ignoreDefaultArgs: ['--hide-scrollbars', '--mute-audio'],
+} : {
+  executablePath: BROWSER_PATH_PROD,
   headless: true,
   timeout: LAUNCH_TIMEOUT,
   ignoreDefaultArgs: ['--hide-scrollbars', '--mute-audio'],
