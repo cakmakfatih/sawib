@@ -3,9 +3,10 @@ import { inject, injectable } from 'tsyringe';
 import Tokens from '../../../../bin/Tokens';
 import Store from 'electron-store';
 import ScraperConfig from '../../domain/entities/ScraperConfig';
+import safeCall from '../../../../utils/safeCall';
 
-const storeKeys = {
-  config: "CONFIG",
+export const SCRAPER_STORE_KEYS = {
+  scraperConfig: "scraperConfig",
 };
 
 export interface ScraperLocalDataSource {
@@ -31,7 +32,24 @@ class ScraperLocalDataSourceImpl implements ScraperLocalDataSource {
   }
 
   setScraperConfig(config: ScraperConfig): boolean {
-    throw new Error('Method not implemented.');
+    this.logger.info("[ScraperLocalDataSource.setScraperConfig] started.");
+
+    const setResultOrFailure = safeCall(() => this.store.set({
+      [SCRAPER_STORE_KEYS.scraperConfig]: config
+    }));
+
+    if (setResultOrFailure.isLeft()) {
+      const setResultErr = setResultOrFailure.value;
+
+      this.logger.error(setResultErr);
+      this.logger.info("[ScraperLocalDataSource.setScraperConfig] completed with a [Failure].");
+
+      throw setResultErr;
+    }
+
+    this.logger.info("[ScraperLocalDataSource.setScraperConfig] completed.");
+
+    return true;
   }
 }
 
