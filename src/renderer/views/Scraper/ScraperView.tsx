@@ -27,20 +27,35 @@ function ScraperView() {
 
       ipcRenderer
         .invoke("usecase:scrapePartNumbers", quoteUrl)
-        .then(() => {
-          Store.addNotification({
-            title: "Successful Scrape",
-            message: `Data is saved to specified path in config (${scraperConfig?.partNumberSavePath}).`,
-            type: "success",
-            insert: "top",
-            container: "top-right",
-            animationIn: ["animate__animated", "animate__fadeIn"],
-            animationOut: ["animate__animated", "animate__fadeOut"],
-            dismiss: {
-              duration: 5000,
-              onScreen: true,
-            },
-          });
+        .then((res) => {
+          if (res)
+            Store.addNotification({
+              title: "Successful Scrape",
+              message: `Data is saved to specified path in config (${scraperConfig?.partNumberSavePath}).`,
+              type: "success",
+              insert: "top",
+              container: "top-right",
+              animationIn: ["animate__animated", "animate__fadeIn"],
+              animationOut: ["animate__animated", "animate__fadeOut"],
+              dismiss: {
+                duration: 5000,
+                onScreen: true,
+              },
+            });
+          else
+            Store.addNotification({
+              title: "Error",
+              message: `An error occurred while scraping, you can view the error log in logs directory`,
+              type: "danger",
+              insert: "top",
+              container: "top-right",
+              animationIn: ["animate__animated", "animate__fadeIn"],
+              animationOut: ["animate__animated", "animate__fadeOut"],
+              dismiss: {
+                duration: 5000,
+                onScreen: true,
+              },
+            });
 
           setIsScraping(false);
         })

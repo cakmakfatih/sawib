@@ -10,26 +10,43 @@ const appPaths: string[] = [];
 console.log("Patching unpacked modules.");
 
 generatedDirectoriesAfterBuild.forEach((dir: string) => {
-    if (fse.statSync(path.join(outDir, dir)).isDirectory()) {
-        appPaths.push(path.join(outDir, dir));
-    }
+  if (fse.statSync(path.join(outDir, dir)).isDirectory()) {
+    appPaths.push(path.join(outDir, dir));
+  }
 });
 
 for (let p of appPaths) {
-    let unpackedDir = path.join(p, "resources", "app.asar.unpacked", "node_modules");
+  let unpackedDir = path.join(p, "resources", "app.asar.unpacked", "node_modules");
 
-    if (!fse.pathExistsSync(unpackedDir)) {
-        fse.mkdirpSync(unpackedDir);
+  if (!fse.pathExistsSync(unpackedDir)) {
+    fse.mkdirpSync(unpackedDir);
+  }
+
+  fse.copySync(appNodeModulesDir, unpackedDir, { overwrite: true, recursive: true }, function (err: any) {
+    if (err) {
+      console.error(err);
+    } else {
+
     }
-
-    fse.copySync(appNodeModulesDir, unpackedDir, { overwrite: true, recursive: true }, function (err: any) {
-      if (err) {
-          console.error(err);
-      } else {
-
-      }
   });
 }
+
+const appDataPath = process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + "/.local/share");
+
+const browserPath = path.join(appDataPath, "..", "Local", "ms-playwright", "firefox-1357");
+const browserOutPath = path.join(outDir, "win-unpacked", "resources", "firefox");
+
+if (!fse.pathExistsSync(browserOutPath)) {
+  fse.mkdirpSync(browserOutPath);
+}
+
+fse.copySync(browserPath, browserOutPath, { overwrite: true, recursive: true }, function (err: any) {
+  if (err) {
+    console.error(err);
+  } else {
+
+  }
+});
 
 console.log("Patching completed.");
 
