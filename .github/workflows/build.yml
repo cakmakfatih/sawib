@@ -44,15 +44,15 @@ jobs:
           node-version: 16
           cache: 'npm'
       - name: Install dependencies
-        run: yarn
+        run: npm install
       - name: Build main process
-        run: yarn build:main
+        run: npm run build:main
       - name: Build renderer process
-        run: yarn build:renderer
+        run: npm run build:renderer
       - name: Test
-        run: yarn test
+        run: npm run test
       - name: Build
-        run: yarn make
+        run: npm run make
       - name: Zip Project
         uses: vimtor/action-zip@v1
         with:
