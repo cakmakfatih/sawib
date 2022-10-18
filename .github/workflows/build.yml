@@ -42,8 +42,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '16.x'
+      - name: Removing Proxy - 1
+        run: npm config rm proxy
+      - name: Removing Proxy - 2
+        run: npm config rm https-proxy
       - name: Install dependencies
-        run: yarn
+        run: yarn install --network-timeout 1000000
       - name: Build main process
         run: yarn build:main
       - name: Build renderer process
