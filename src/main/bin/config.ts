@@ -36,3 +36,5 @@ export const DEFAULT_ABOUT_CONFIG: AboutConfig = {
   "media.peerconnection.enabled": true,
   "dom.ipc.processCount": 2,
 };
+
+export const SENTRY_DSN_URL = "https://f2e3023b40eb413bbd5c590dae8993cf@o1151796.ingest.sentry.io/4503946505158656";
