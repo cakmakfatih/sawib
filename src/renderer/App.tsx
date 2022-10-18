@@ -7,10 +7,27 @@ import SettingsView from "./views/Settings/SettingsView";
 import { ReactNotifications } from "react-notifications-component";
 import "react-notifications-component/dist/theme.css";
 import ScraperView from "./views/Scraper/ScraperView";
+import { useReducer } from "react";
+import appReducer from "./store/reducers";
+import { AppContext, appInitialState } from "./store/context";
+
+const AppProvider = ({
+  children,
+}: {
+  children: JSX.Element[] | JSX.Element;
+}) => {
+  const [state, dispatch] = useReducer(appReducer, appInitialState);
+
+  return (
+    <AppContext.Provider value={{ state, dispatch }}>
+      {children}
+    </AppContext.Provider>
+  );
+};
 
 export default function App() {
   return (
-    <>
+    <AppProvider>
       <ReactNotifications />
       <Router>
         <Layout>
@@ -22,6 +39,6 @@ export default function App() {
           </Routes>
         </Layout>
       </Router>
-    </>
+    </AppProvider>
   );
 }

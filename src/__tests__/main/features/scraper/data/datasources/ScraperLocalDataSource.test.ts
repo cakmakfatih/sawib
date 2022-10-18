@@ -22,7 +22,7 @@ describe("ScraperLocalDataSource", () => {
         username: "test-username",
         password: "test-password",
       },
-      partNumberSavePath: "test-path",
+      savePath: "test-path",
     };
   });
 

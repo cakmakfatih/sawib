@@ -25,13 +25,13 @@ import { ILoginToPartsCheck, LoginToPartsCheck } from '../features/scraper/domai
 import { ISavePartNumbersAsCsv, SavePartNumbersAsCsv } from '../features/scraper/domain/usecases/SavePartNumbersAsCsv';
 import { IScrapePartNumbers, ScrapePartNumbers } from '../features/scraper/domain/usecases/ScrapePartNumbers';
 import { ISetScraperConfig, SetScraperConfig } from '../features/scraper/domain/usecases/SetScraperConfig';
+import { SENTRY_DSN_URL } from '../bin/config';
 
 export function initSentry() {
-  if (typeof process.env.SENTRY_DSN_URL !== "undefined")
-    Sentry.init({
-      dsn: process.env.SENTRY_DSN_URL,
-      tracesSampleRate: 1.0,
-    });
+  Sentry.init({
+    dsn: SENTRY_DSN_URL,
+    tracesSampleRate: 1.0,
+  });
 }
 
 export function initBrowser() {

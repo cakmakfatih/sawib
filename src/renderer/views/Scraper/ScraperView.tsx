@@ -1,29 +1,21 @@
-import ScraperConfig from "../../../main/features/scraper/domain/entities/ScraperConfig";
-import { useState, useEffect } from "react";
+import { useContext } from "react";
 import { ipcRenderer } from "electron";
 import "./ScraperView.css";
 import { Link } from "react-router-dom";
 import { Store } from "react-notifications-component";
+import { AppContext } from "../../store/context";
+import { Types } from "../../store/reducers";
 
 function ScraperView() {
-  const [scraperConfig, setScraperConfig] = useState<ScraperConfig | null>(
-    null
-  );
-
-  const [quoteUrl, setquoteUrl] = useState<string>("");
-  const [isScraping, setIsScraping] = useState<boolean>(false);
-
-  useEffect(() => {
-    const config: ScraperConfig = ipcRenderer.sendSync(
-      "usecase:getScraperConfig"
-    );
-
-    setScraperConfig(config);
-  }, []);
+  const { state, dispatch } = useContext(AppContext);
+  const { scraperConfig, isScraping, quoteUrl } = state;
 
   const scrape = async () => {
     if (quoteUrl) {
-      setIsScraping(true);
+      dispatch({
+        type: Types.setIsScraping,
+        payload: true,
+      });
 
       ipcRenderer
         .invoke("usecase:scrapePartNumbers", quoteUrl)
@@ -31,7 +23,7 @@ function ScraperView() {
           if (res)
             Store.addNotification({
               title: "Successful Scrape",
-              message: `Data is saved to specified path in config (${scraperConfig?.partNumberSavePath}).`,
+              message: `Data is saved to specified path in config (${scraperConfig?.savePath}).`,
               type: "success",
               insert: "top",
               container: "top-right",
@@ -57,7 +49,10 @@ function ScraperView() {
               },
             });
 
-          setIsScraping(false);
+          dispatch({
+            type: Types.setIsScraping,
+            payload: false,
+          });
         })
         .catch((err) => {
           Store.addNotification({
@@ -74,7 +69,10 @@ function ScraperView() {
             },
           });
 
-          setIsScraping(false);
+          dispatch({
+            type: Types.setIsScraping,
+            payload: false,
+          });
         });
     }
   };
@@ -114,7 +112,13 @@ function ScraperView() {
             partscheck.com.au Quote URL
           </label>
           <input
-            onChange={(e) => setquoteUrl(e.target.value)}
+            onChange={(e) =>
+              dispatch({
+                type: Types.setQuoteUrl,
+                payload: e.target.value,
+              })
+            }
+            defaultValue={quoteUrl}
             id="partsCheckQuoteUrl"
             className="inp-default"
             type="text"
