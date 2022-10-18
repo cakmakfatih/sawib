@@ -1,0 +1,65 @@
+name: Build
+
+on:
+  push:
+    branches: [ stage ]
+  pull_request:
+    branches: [ stage ]
+
+jobs:
+  release-project:
+    runs-on: windows-latest
+    needs: build-project
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: sawib
+          path: ./sawib-win64.zip
+      - name: Create GitHub Release
+        id: create-new-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release v${{ github.run_number }}
+      - name: Upload Asset to GitHub Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-new-release.outputs.upload_url }}
+          asset_path: sawib-v${{ github.run_number }}.zip
+          asset_content_type: application/zip
+
+  build-project:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'yarn'
+      - name: Install dependencies
+        run: yarn
+      - name: Install dependencies
+        run: yarn
+      - name: Build main process
+        run: yarn build:main
+      - name: Build renderer process
+        run: yarn build:renderer
+      - name: Test
+        run: yarn test
+      - name: Build
+        run: yarn package
+      - name: Zip Project
+        uses: vimtor/action-zip@v1
+        with:
+          files: release/build/win-unpacked
+          dest: ./sawib-win64.zip
+      - uses: actions/upload-artifact@v2
+        with:
+          name: sawib
+          path: ./sawib-win64.zip
