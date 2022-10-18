@@ -31,7 +31,7 @@ jobs:
         with:
           upload_url: ${{ steps.create-new-release.outputs.upload_url }}
           asset_name: sawib
-          asset_path: ./sawib-v${{ github.run_number }}.zip
+          asset_path: ./sawib-win64.zip
           asset_content_type: application/zip
 
   build-project:
