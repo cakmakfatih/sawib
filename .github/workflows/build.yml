@@ -15,7 +15,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: sawib
-          path: ./sawib-win64.zip
+          asset_path: ./sawib-win64.zip
       - name: Create GitHub Release
         id: create-new-release
         uses: actions/create-release@v1
@@ -30,7 +30,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-new-release.outputs.upload_url }}
-          asset_path: sawib-v${{ github.run_number }}.zip
+          asset_name: sawib
+          asset_path: ./sawib-v${{ github.run_number }}.zip
           asset_content_type: application/zip
 
   build-project:
@@ -41,7 +42,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: 'yarn'
+          cache: 'npm'
       - name: Install dependencies
         run: yarn
       - name: Build main process
