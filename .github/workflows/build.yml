@@ -14,7 +14,7 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v3
         with:
-          name: sawib-win64
+          name: sawib.zip
           path: ./sawib-win64.zip
       - name: Create GitHub Release
         id: create-new-release
@@ -30,8 +30,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-new-release.outputs.upload_url }}
-          asset_name: sawib-win64.zip
-          asset_path: sawib-win64.zip
+          asset_name: sawib.zip
+          asset_path: sawib.zip
           asset_content_type: application/zip
 
   build-project:
