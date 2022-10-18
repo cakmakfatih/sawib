@@ -15,7 +15,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: sawib
-          path: ./sawib-win64.zip
+          path: ./
       - name: Create GitHub Release
         id: create-new-release
         uses: actions/create-release@v1
@@ -24,14 +24,14 @@ jobs:
         with:
           tag_name: v${{ github.run_number }}
           release_name: Release v${{ github.run_number }}
-      - name: Upload Asset to GitHub Release
+      - name: Upload the release asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create-new-release.outputs.upload_url }}
-          asset_name: sawib
-          asset_path: ./sawib-win64.zip
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_name: sawib.zip
+          asset_path: sawib.zip
           asset_content_type: application/zip
 
   build-project:
