@@ -77,7 +77,13 @@ function ScraperView() {
     }
   };
 
-  if (scraperConfig === null) {
+  if (
+    !(
+      scraperConfig &&
+      scraperConfig?.savePath &&
+      scraperConfig?.partsCheckCredentials
+    )
+  ) {
     return (
       <>
         <section className="scraper-wrapper">

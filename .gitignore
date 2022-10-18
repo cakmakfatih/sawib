@@ -30,3 +30,6 @@ npm-debug.log.*
 *.scss.d.ts
 .vscode
 tmp
+
+firefox
+firefox.zip
