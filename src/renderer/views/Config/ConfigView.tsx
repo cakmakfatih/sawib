@@ -1,30 +1,15 @@
 import "./ConfigView.css";
-import { useState, useEffect } from "react";
+import { useContext } from "react";
 import FolderIcon from "@mui/icons-material/Folder";
 import { ipcRenderer } from "electron";
 import ScraperConfig from "../../../main/features/scraper/domain/entities/ScraperConfig";
 import { Store } from "react-notifications-component";
+import { AppContext } from "../../store/context";
+import { Types } from "renderer/store/reducers";
 
 function ConfigView() {
-  useEffect(() => {
-    setInitialData();
-  }, []);
-
-  const [partsCheckUsername, setPartsCheckUsername] = useState<string>("");
-  const [partsCheckPassword, setPartsCheckPassword] = useState<string>("");
-  const [scraperSavePath, setScraperSavePath] = useState<string>("");
-
-  const setInitialData = () => {
-    const scraperConfig: ScraperConfig = ipcRenderer.sendSync(
-      "usecase:getScraperConfig"
-    );
-
-    if (scraperConfig) {
-      setPartsCheckUsername(scraperConfig.partsCheckCredentials.username || "");
-      setPartsCheckPassword(scraperConfig.partsCheckCredentials.password || "");
-      setScraperSavePath(scraperConfig.partNumberSavePath || "");
-    }
-  };
+  const { state, dispatch } = useContext(AppContext);
+  const { partsCheckUsername, partsCheckPassword, scraperSavePath } = state;
 
   const saveConfig = () => {
     if (partsCheckUsername && partsCheckPassword && scraperSavePath) {
@@ -33,7 +18,7 @@ function ConfigView() {
           username: partsCheckUsername,
           password: partsCheckPassword,
         },
-        partNumberSavePath: scraperSavePath,
+        savePath: scraperSavePath,
       };
 
       const saveResult = ipcRenderer.sendSync(
@@ -42,6 +27,11 @@ function ConfigView() {
       );
 
       if (saveResult) {
+        dispatch({
+          type: Types.setScraperConfig,
+          payload: scraperConfig,
+        });
+
         Store.addNotification({
           title: "Successful",
           message: "You have successfully saved [Config].",
@@ -65,53 +55,64 @@ function ConfigView() {
     );
 
     if (openBrowseDialogResult !== null) {
-      setScraperSavePath(openBrowseDialogResult);
+      dispatch({
+        type: Types.setScraperSavePath,
+        payload: openBrowseDialogResult,
+      });
     }
   };
 
   return (
-    <>
-      <section className="config-wrapper">
-        <div className="inp-container">
-          <label htmlFor="partsCheckUsername">partscheck.com.au username</label>
+    <section className="config-wrapper">
+      <div className="inp-container">
+        <label htmlFor="partsCheckUsername">partscheck.com.au username</label>
+        <input
+          defaultValue={partsCheckUsername}
+          id="partsCheckUsername"
+          className="inp-default"
+          type="text"
+          onChange={(e) =>
+            dispatch({
+              type: Types.setPartsCheckUsername,
+              payload: e.target.value,
+            })
+          }
+        />
+      </div>
+      <div className="inp-container">
+        <label htmlFor="partsCheckPassword">partscheck.com.au password</label>
+        <input
+          defaultValue={partsCheckPassword}
+          id="partsCheckPassword"
+          className="inp-default"
+          type="password"
+          onChange={(e) =>
+            dispatch({
+              type: Types.setPartsCheckPassword,
+              payload: e.target.value,
+            })
+          }
+        />
+      </div>
+      <div className="inp-container" onClick={openBrowseDialog}>
+        <label>Save Directory</label>
+        <div className="inp-with-btn">
           <input
-            defaultValue={partsCheckUsername}
-            id="partsCheckUsername"
             className="inp-default"
             type="text"
-            onChange={(e) => setPartsCheckUsername(e.target.value)}
+            value={scraperSavePath}
+            disabled={true}
           />
+          <button>
+            <FolderIcon />
+          </button>
         </div>
-        <div className="inp-container">
-          <label htmlFor="partsCheckPassword">partscheck.com.au password</label>
-          <input
-            defaultValue={partsCheckPassword}
-            id="partsCheckPassword"
-            className="inp-default"
-            type="password"
-            onChange={(e) => setPartsCheckPassword(e.target.value)}
-          />
-        </div>
-        <div className="inp-container" onClick={openBrowseDialog}>
-          <label>Save Directory</label>
-          <div className="inp-with-btn">
-            <input
-              className="inp-default"
-              type="text"
-              value={scraperSavePath}
-              disabled={true}
-            />
-            <button>
-              <FolderIcon />
-            </button>
-          </div>
-        </div>
-        <div style={{ flex: 1 }}></div>
-        <button onClick={saveConfig} className="btn-default config-save-btn">
-          SAVE
-        </button>
-      </section>
-    </>
+      </div>
+      <div style={{ flex: 1 }}></div>
+      <button onClick={saveConfig} className="btn-default config-save-btn">
+        SAVE
+      </button>
+    </section>
   );
 }
 
