@@ -56,7 +56,7 @@ async function unzipFirefox() {
   generatedDirectoriesAfterBuild.forEach((dir: string) => {
     const p = path.join(outDir, dir);
 
-    if (!p.includes("firefox") && fse.statSync(p).isDirectory()) {
+    if (!p.includes("firefox") && fse.statSync(p).isDirectory() && p.includes("unpacked")) {
       appPaths.push(path.join(outDir, dir));
     }
   });
@@ -73,19 +73,19 @@ async function unzipFirefox() {
         console.error(err);
       }
     });
-  }
 
-  const browserOutPath = path.join(outDir, "win-unpacked", "resources", "firefox");
+    const browserOutPath = path.join(p, "resources", "firefox");
 
-  if (!fse.pathExistsSync(browserOutPath)) {
-    fse.mkdirpSync(browserOutPath);
-  }
-
-  fse.copySync(ffPath, browserOutPath, { overwrite: true, recursive: true }, function (err: any) {
-    if (err) {
-      console.error(err);
+    if (!fse.pathExistsSync(browserOutPath)) {
+      fse.mkdirpSync(browserOutPath);
     }
-  });
+
+    fse.copySync(ffPath, browserOutPath, { overwrite: true, recursive: true }, function (err: any) {
+      if (err) {
+        console.error(err);
+      }
+    });
+  }
 
   console.log("Patching completed.");
 
