@@ -15,7 +15,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: sawib
-          asset_path: ./sawib-win64.zip
+          path: ./sawib-win64.zip
       - name: Create GitHub Release
         id: create-new-release
         uses: actions/create-release@v1
