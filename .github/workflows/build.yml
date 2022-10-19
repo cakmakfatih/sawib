@@ -1,6 +1,8 @@
-name: Build
+name: Build & Deploy
 
 on:
+  push:
+    branches: [ stage ]
   pull_request:
     branches: [ stage ]
 
