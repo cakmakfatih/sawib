@@ -18,7 +18,7 @@ jobs:
           path: ./
       - name: Generate Version & Tag Name
         id: bump_version
-        uses: anothrNick/github-tag-action@v1
+        uses: mathieudutour/github-tag-action@v6.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
@@ -30,6 +30,7 @@ jobs:
         with:
           tag_name: ${{ steps.bump_version.outputs.new_tag }}
           release_name: ${{ steps.bump_version.outputs.new_tag }}
+          body: ${{ steps.bump_version.outputs.changelog }}
           draft: false
           prerelease: false
       - name: Upload the Release Asset
