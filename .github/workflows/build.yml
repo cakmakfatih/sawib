@@ -19,7 +19,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: sawib-win64
-          path: ./sawib-win64.zip
+          path: ./
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
