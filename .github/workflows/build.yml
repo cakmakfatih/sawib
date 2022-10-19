@@ -1,8 +1,6 @@
 name: Build
 
 on:
-  push:
-    branches: [ stage ]
   pull_request:
     branches: [ stage ]
 
@@ -16,7 +14,7 @@ jobs:
         with:
           name: sawib-win64
           path: ./
-      - name: Bump Version and Push Tag
+      - name: Generate Version & Tag Name
         id: bump_version
         uses: anothrNick/github-tag-action@v1
         env:
