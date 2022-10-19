@@ -16,7 +16,7 @@ jobs:
         with:
           name: sawib-win64
           path: ./
-      - name: Bump version and push tag
+      - name: Bump Version and Push Tag
         id: bump_version
         uses: anothrNick/github-tag-action@v1
         env:
