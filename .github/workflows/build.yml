@@ -56,6 +56,12 @@ jobs:
         run: npm config rm https-proxy
       - name: Install dependencies
         run: yarn install --network-timeout 1000000
+      - name: Build main process
+        run: yarn build:main
+      - name: Build renderer process
+        run: yarn build:renderer
+      - name: Test
+        run: yarn test
       - name: Build
         run: yarn make
       - name: Zip Project
