@@ -63,6 +63,14 @@ class ScraperRepositoryImpl implements ScraperRepository {
     this.newBot = newBot;
   }
 
+  getPartNumbers(url: string): Promise<Either<Failure, string[]>> {
+    throw new Error('Method not implemented.');
+  }
+
+  savePartNumbers(partNumbers: string[]): Promise<Either<Failure, boolean>> {
+    throw new Error('Method not implemented.');
+  }
+
   private async launchBotController(): Promise<Either<Failure, BotController>> {
     const stealthBrowserOrFailure = await this.launchBrowser();
 
