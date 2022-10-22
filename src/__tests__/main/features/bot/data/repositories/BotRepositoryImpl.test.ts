@@ -175,6 +175,23 @@ describe("BotRepository", () => {
       closeContextSpy.resetHistory();
       closeBrowserSpy.resetHistory();
       newBotStub.resetHistory();
+      initializeStub.resetHistory();
+      mockLaunchBrowser.resetHistory();
+    });
+
+    it("should call [Logger.info] correctly", async () => {
+      // arrange
+      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
+      newBotStub.resolves(new Right(mockBotController));
+      initializeStub.resolves(new Right(null));
+
+      // act
+      await repository.launchBotController();
+
+      // assert
+      ok(mockLogger.info.calledWith("[BotRepository.launchBotController] started."));
+      ok(mockLogger.info.calledWith("[BotRepository.launchBotController] completed."));
+      equal(mockLogger.info.callCount, 2);
     });
 
     it("should call [launchBrowser] and return [Failure] if result is [Left]", async () => {

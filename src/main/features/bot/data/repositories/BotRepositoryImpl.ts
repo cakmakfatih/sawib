@@ -77,6 +77,8 @@ class BotRepositoryImpl implements BotRepository {
   }
 
   async launchBotController(): Promise<Either<Failure, BotController>> {
+    this.logger.info("[BotRepository.launchBotController] started.");
+
     const stealthBrowserOrFailure = await this.launchBrowser();
 
     if (stealthBrowserOrFailure.isLeft()) {
@@ -113,6 +115,8 @@ class BotRepositoryImpl implements BotRepository {
 
       return new Left(initializedOrFailed.value);
     }
+
+    this.logger.info("[BotRepository.launchBotController] completed.");
 
     return new Right(botController);
   }
