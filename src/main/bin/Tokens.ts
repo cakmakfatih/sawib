@@ -5,6 +5,7 @@ class Tokens {
   static botRepository = Symbol.for("repository.bot");
   static newBot = Symbol.for("usecase.newBot");
   static createPages = Symbol.for("usecase.createPages");
+  static launchBotController = Symbol.for("usecase.launchBotController");
   static scraperRepository = Symbol.for("repository.scraper");
   static scraperLocalDataSource = Symbol.for("localdatasource.scraper");
   static getScraperConfig = Symbol.for("usecase.getScraperConfig");

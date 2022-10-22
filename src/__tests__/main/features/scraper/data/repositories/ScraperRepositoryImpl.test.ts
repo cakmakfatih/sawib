@@ -1,10 +1,10 @@
 import Logger from '../../../../../../main/core/Logger';
 import sinon, { stubInterface } from 'ts-sinon';
-import ScraperRepositoryImpl, { FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_NEW_BOT_WARNING_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, SCRAPER_PAGE_FILL_FAILURE_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
+import ScraperRepositoryImpl, { FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, PARTS_CHECK_LOGIN_URL, SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, SCRAPER_PAGE_FILL_FAILURE_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
 import ScraperLocalDataSource from '../../../../../../main/features/scraper/data/datasources/ScraperLocalDataSource';
 import { deepEqual, equal, ok } from 'assert';
 import { ScrapePartNumbersParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumbers';
-import { BotFailure, BrowserFailure, ScraperFailure } from '../../../../../../main/core/error/failures';
+import { BrowserFailure, ScraperFailure } from '../../../../../../main/core/error/failures';
 import { Left, Right } from '@typed-f/either';
 import StealthBrowser from '../../../../../../main/features/browser/domain/entities/StealthBrowser';
 import BotController from '../../../../../../main/features/bot/presentation/controllers/BotController';
@@ -18,8 +18,7 @@ const document = new jsdom.JSDOM().window.document;
 
 const mockLogger = stubInterface<Logger>();
 const mockLocalDataSource = stubInterface<ScraperLocalDataSource>();
-const mockLaunchBrowser = sinon.stub();
-const mockNewBot = sinon.stub();
+const mockLaunchBotController = sinon.stub();
 
 const mockStealthBrowser = stubInterface<StealthBrowser>();
 const mockBotController = new BotController(mockStealthBrowser);
@@ -58,8 +57,7 @@ mockStealthBrowser.context.close = closeContextSpy;
 const repository = new ScraperRepositoryImpl(
   mockLogger,
   mockLocalDataSource,
-  mockLaunchBrowser,
-  mockNewBot,
+  mockLaunchBotController,
 );
 
 describe("ScraperRepository", () => {
@@ -76,8 +74,7 @@ describe("ScraperRepository", () => {
       mockLogger.info.resetHistory();
       mockLogger.warn.resetHistory();
       mockLogger.error.resetHistory();
-      mockLaunchBrowser.resetHistory();
-      mockNewBot.resetHistory();
+      mockLaunchBotController.resetHistory();
       closeBrowserSpy.resetHistory();
       closeContextSpy.resetHistory();
       mockBotControllerInitialize.resetHistory();
@@ -90,8 +87,7 @@ describe("ScraperRepository", () => {
 
     it("should call [Logger.info] correctly", async () => {
       // arrange
-      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
-      mockNewBot.resolves(new Right(mockBotController));
+      mockLaunchBotController.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
@@ -109,65 +105,26 @@ describe("ScraperRepository", () => {
       equal(mockLogger.info.callCount, 2);
     });
 
-    it("should call [launchBrowser] and return [Failure] if result is [Left]", async () => {
+    it("should return [Failure] if [launchBotController] fails", async () => {
       // arrange
       const err = new Error("test-err");
-      const browserFailure = new BrowserFailure("failed launching", err);
-      mockLaunchBrowser.resolves(new Left(browserFailure));
+      const expectedFailure = new BrowserFailure(SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE, err);
+      mockLaunchBotController.resolves(new Left(expectedFailure));
 
       // act
-      const result = await repository.scrapePartNumbers("test-url");
+      const params: ScrapePartNumbersParams = "12356";
+      const result = await repository.scrapePartNumbers(params);
 
       // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] started."));
       ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] completed with a [Failure]."));
-      ok(mockLogger.warn.calledOnceWith(SCRAPER_LAUNCH_BROWSER_WARNING_MESSAGE));
-      ok(mockLaunchBrowser.calledOnceWith());
-      deepEqual(result, new Left(browserFailure));
-    });
-
-    it("should call [newBot] with correct params and return [Failure] if result is [Left] and dispose browser", async () => {
-      // arrange
-      const err = new Error("test-err");
-      const botFailure = new BotFailure("failed creating a bot", err);
-      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
-      mockNewBot.resolves(new Left(botFailure));
-
-      // act
-      const result = await repository.scrapePartNumbers("test-url");
-
-      // assert
-      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] completed with a [Failure]."));
-      ok(mockLogger.warn.calledOnceWith(SCRAPER_NEW_BOT_WARNING_MESSAGE));
-      ok(closeContextSpy.calledOnceWith());
-      ok(closeBrowserSpy.calledOnceWith());
-      ok(mockNewBot.calledOnceWith(mockStealthBrowser));
-      deepEqual(result, new Left(botFailure));
-    });
-
-    it("should call [BotController.initialize] and return [Failure] if result is [Left]", async () => {
-      // arrange
-      const err = new Error("test-err");
-      const botFailure = new BotFailure("failed creating pages", err);
-      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
-      mockNewBot.resolves(new Right(mockBotController));
-      mockBotControllerInitialize.resolves(new Left(botFailure));
-
-      // act
-      const result = await repository.scrapePartNumbers("test-url");
-
-      // assert
-      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] completed with a [Failure]."));
-      ok(mockLogger.warn.calledOnceWith(SCRAPER_BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE));
-      ok(closeContextSpy.calledOnceWith());
-      ok(closeBrowserSpy.calledOnceWith());
-      ok(mockBotControllerInitialize.calledOnceWith());
-      deepEqual(result, new Left(botFailure));
+      ok(mockLogger.warn.calledOnceWith(expectedFailure.message));
+      deepEqual(result, new Left(expectedFailure));
     });
 
     it("should call [loginToPartsCheck] with correct params", async () => {
       // arrange
-      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
-      mockNewBot.resolves(new Right(mockBotController));
+      mockLaunchBotController.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
@@ -183,8 +140,7 @@ describe("ScraperRepository", () => {
 
     it("should dispose and return [Failure] if [loginToPartsCheck] fails", async () => {
       // arrange
-      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
-      mockNewBot.resolves(new Right(mockBotController));
+      mockLaunchBotController.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
 
       const err = new Error("scraper err");
@@ -204,8 +160,7 @@ describe("ScraperRepository", () => {
     it("should call [goto] with correct URL to Quotes using one of the [controller.pages]", async () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
-      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
-      mockNewBot.resolves(new Right(mockBotController));
+      mockLaunchBotController.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
@@ -222,8 +177,7 @@ describe("ScraperRepository", () => {
     it("should return [ScraperFailure] if navigation to the [page.goto] rejects", async () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
-      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
-      mockNewBot.resolves(new Right(mockBotController));
+      mockLaunchBotController.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       const err = new Error("err");
@@ -247,8 +201,7 @@ describe("ScraperRepository", () => {
     it("should call [page.locator] on [partNrSelector] to get all elements", async () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
-      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
-      mockNewBot.resolves(new Right(mockBotController));
+      mockLaunchBotController.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
@@ -278,8 +231,7 @@ describe("ScraperRepository", () => {
     it("should call [savePartNumbersAsCsv] with correctly scraped data", async () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
-      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
-      mockNewBot.resolves(new Right(mockBotController));
+      mockLaunchBotController.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
@@ -314,8 +266,7 @@ describe("ScraperRepository", () => {
     it("should log correctly return a [Failure] if [elementHandles] rejects", async () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
-      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
-      mockNewBot.resolves(new Right(mockBotController));
+      mockLaunchBotController.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
@@ -345,8 +296,7 @@ describe("ScraperRepository", () => {
       node.getAttribute = getAttributeStub;
 
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
-      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
-      mockNewBot.resolves(new Right(mockBotController));
+      mockLaunchBotController.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
@@ -377,8 +327,7 @@ describe("ScraperRepository", () => {
     it("should log correctly and return a [Failure] if [scrapePartNumbers] throws", async () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
-      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
-      mockNewBot.resolves(new Right(mockBotController));
+      mockLaunchBotController.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
@@ -400,8 +349,7 @@ describe("ScraperRepository", () => {
     it("should return [Right<true>] if everything ran without an issue and dispose browser", async () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
-      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
-      mockNewBot.resolves(new Right(mockBotController));
+      mockLaunchBotController.resolves(new Right(mockBotController));
       mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
