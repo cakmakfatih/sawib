@@ -1,6 +1,6 @@
 import Logger from '../../../../../../main/core/Logger';
 import sinon, { stubInterface } from 'ts-sinon';
-import BotRepositoryImpl, { CREATE_PAGES_FAILURE_MESSAGE } from '../../../../../../main/features/bot/data/repositories/BotRepositoryImpl';
+import BotRepositoryImpl, { BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE, CREATE_PAGES_FAILURE_MESSAGE, LAUNCH_BROWSER_WARNING_MESSAGE, NEW_BOT_WARNING_MESSAGE } from '../../../../../../main/features/bot/data/repositories/BotRepositoryImpl';
 import { deepEqual, equal, ok } from 'assert';
 import StealthBrowser from '../../../../../../main/features/browser/domain/entities/StealthBrowser';
 import BotController from '../../../../../../main/features/bot/presentation/controllers/BotController';
@@ -10,24 +10,28 @@ import { Page } from 'playwright-firefox';
 import { NEW_PAGE_FAILURE_MESSAGE } from '../../../../../../main/features/browser/data/repositories/BrowserRepositoryImpl';
 import { BotFailure, BrowserFailure } from '../../../../../../main/core/error/failures';
 
+const mockStealthBrowser = stubInterface<StealthBrowser>();
+
+const closeBrowserSpy = sinon.spy();
+const closeContextSpy = sinon.spy();
+mockStealthBrowser.browser.close = closeBrowserSpy;
+mockStealthBrowser.context.close = closeContextSpy;
+
 const mockLogger = stubInterface<Logger>();
 const mockNewPage = sinon.stub();
 
-const mockStealthBrowser: StealthBrowser = stubInterface<StealthBrowser>();
+const mockLaunchBrowser = sinon.stub();
 
 const repository = new BotRepositoryImpl(
   mockLogger,
   mockNewPage,
+  mockLaunchBrowser,
 );
+
+const mockBotController = new BotController(mockStealthBrowser);
 
 describe("BotRepository", () => {
   describe("newBot", () => {
-    let successfulResult: BotController;
-
-    beforeAll(() => {
-      successfulResult = new BotController(mockStealthBrowser);
-    });
-
     beforeEach(() => {
       mockLogger.info.resetHistory();
     });
@@ -44,7 +48,7 @@ describe("BotRepository", () => {
 
     it("should return [BotController] if doesn't run into any errors", async () => {
       // arrange
-      const expectedResult = new Right(successfulResult);
+      const expectedResult = new Right(mockBotController);
 
       // act
       const result = await repository.newBot(mockStealthBrowser);
@@ -148,6 +152,89 @@ describe("BotRepository", () => {
 
       // assert
       equal(mockPageCloseStub.callCount, randomErrCallIndex);
+    });
+  });
+
+  describe("launchBotController", () => {
+    let newBotStub: sinon.SinonStub;
+    let initializeStub: sinon.SinonStub;
+
+    beforeAll(() => {
+      newBotStub = sinon.stub(repository, "newBot");
+      initializeStub = sinon.stub(mockBotController, "initialize");
+    });
+
+    afterAll(() => {
+      newBotStub.restore();
+      initializeStub.restore();
+    });
+
+    beforeEach(() => {
+      mockLogger.info.resetHistory();
+      mockLogger.warn.resetHistory();
+      closeContextSpy.resetHistory();
+      closeBrowserSpy.resetHistory();
+      newBotStub.resetHistory();
+    });
+
+    it("should call [launchBrowser] and return [Failure] if result is [Left]", async () => {
+      // arrange
+      const err = new Error("test-err");
+      const browserFailure = new BrowserFailure("failed launching", err);
+      mockLaunchBrowser.resolves(new Left(browserFailure));
+
+      // act
+      const result = await repository.launchBotController();
+
+      // assert
+      ok(mockLogger.info.calledWith("[BotRepository.launchBotController] completed with a [Failure]."));
+      ok(mockLogger.warn.calledOnceWith(LAUNCH_BROWSER_WARNING_MESSAGE));
+      ok(mockLaunchBrowser.calledOnceWith());
+      deepEqual(result, new Left(browserFailure));
+    });
+
+    it("should call [newBot] with correct params and return [Failure] if result is [Left] and dispose browser", async () => {
+      // arrange
+      const err = new Error("test-err");
+      const botFailure = new BotFailure("failed creating a bot", err);
+      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
+      newBotStub.resolves(new Left(botFailure));
+
+      // act
+      const result = await repository.launchBotController();
+
+      // assert
+      ok(mockLogger.info.calledWith("[BotRepository.launchBotController] completed with a [Failure]."));
+      ok(mockLogger.warn.calledOnceWith(NEW_BOT_WARNING_MESSAGE));
+      ok(closeContextSpy.calledOnceWith());
+      ok(closeBrowserSpy.calledOnceWith());
+      ok(newBotStub.calledOnceWith(mockStealthBrowser));
+      deepEqual(result, new Left(botFailure));
+    });
+
+    it("should call [BotController.initialize] and return [Failure] if result is [Left]", async () => {
+      // arrange
+      const err = new Error("test-err");
+      const botFailure = new BotFailure("failed creating pages", err);
+      mockLaunchBrowser.resolves(new Right(mockStealthBrowser));
+      newBotStub.resolves(new Right(mockBotController));
+      initializeStub.resolves(new Left(botFailure));
+
+      // act
+      const result = await repository.launchBotController();
+
+      // assert
+      ok(mockLogger.info.calledWith("[BotRepository.launchBotController] completed with a [Failure]."));
+      ok(mockLogger.warn.calledOnceWith(BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE));
+      ok(closeContextSpy.calledOnceWith());
+      ok(closeBrowserSpy.calledOnceWith());
+      ok(initializeStub.calledOnceWith());
+      deepEqual(result, new Left(botFailure));
+    });
+
+    afterAll(() => {
+      newBotStub.restore();
+      initializeStub.restore();
     });
   });
 });
