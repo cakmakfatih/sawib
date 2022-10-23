@@ -13,7 +13,7 @@ import jsdom from 'jsdom';
 import ScraperConfig from '../../../../../../main/features/scraper/domain/entities/ScraperConfig';
 import fs from 'fs';
 import path from 'path';
-import { GetPartNumbersParams } from 'main/features/scraper/domain/usecases/GetPartNumbers';
+import { GetPartNumbersParams } from '../../../../../../main/features/scraper/domain/usecases/GetPartNumbers';
 
 const document = new jsdom.JSDOM().window.document;
 
