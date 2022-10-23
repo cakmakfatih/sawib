@@ -65,7 +65,6 @@ describe("ScraperRepository", () => {
       mockLogger.info.resetHistory();
       mockLogger.warn.resetHistory();
       mockLogger.error.resetHistory();
-      pageGoToStub.resetHistory();
       pageLocatorStub.resetHistory();
       elementHandlesStub.resetHistory();
     });
