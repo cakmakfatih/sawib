@@ -62,15 +62,6 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
     const page = botController.pages[0];
 
-    const loggedInOrFailed = await this.loginToPartsCheck(page);
-
-    if (loggedInOrFailed.isLeft()) {
-      this.logger.info("[ScraperRepository.getPartNumbers] completed with a [Failure].");
-      this.logger.warn(SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE);
-
-      return new Left(loggedInOrFailed.value);
-    }
-
     const navigatedToUrlOrFailed = await safePromise<null | Response>(() => page.goto(url));
 
     if (navigatedToUrlOrFailed.isLeft()) {
@@ -139,6 +130,21 @@ class ScraperRepositoryImpl implements ScraperRepository {
     const botController = botOrFailure.value;
     const { stealthBrowser } = botController;
 
+    const loggedInOrFailed = await this.loginToPartsCheck(botController.pages[0]);
+
+    if (loggedInOrFailed.isLeft()) {
+      const loginFailure = loggedInOrFailed.value;
+
+      await stealthBrowser.context.close();
+      await stealthBrowser.browser.close();
+
+      this.logger.warn(SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE);
+
+      this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
+
+      return new Left(loginFailure);
+    }
+
     const partNumbersOrFailure = await this.getPartNumbers({ botController, url });
 
     if (partNumbersOrFailure.isLeft()) {
@@ -166,10 +172,10 @@ class ScraperRepositoryImpl implements ScraperRepository {
       return new Left(failure);
     }
 
-    this.logger.info("[ScraperRepository.scrapePartNumbers] completed.");
-
     await stealthBrowser.context.close();
     await stealthBrowser.browser.close();
+
+    this.logger.info("[ScraperRepository.scrapePartNumbers] completed.");
 
     return new Right(true);
   }
