@@ -38,12 +38,10 @@ mockLocator.elementHandles = elementHandlesStub;
 mockLocator.waitFor = waitForStub;
 
 const pageGoToStub = sinon.stub();
-const pageCloseStub = sinon.stub();
 const pageLocatorStub = sinon.stub();
 const pageFillStub = sinon.stub();
 const pageClickStub = sinon.stub();
 
-mockPage.close = pageCloseStub;
 mockPage.goto = pageGoToStub;
 mockPage.locator = pageLocatorStub;
 mockPage.fill = pageFillStub;
@@ -441,7 +439,6 @@ describe("ScraperRepository", () => {
       mockLogger.warn.resetHistory();
       mockLogger.error.resetHistory();
       getScraperConfigStub.resetHistory();
-      pageCloseStub.resetHistory();
       pageGoToStub.resetHistory();
       pageFillStub.resetHistory();
       pageClickStub.resetHistory();
@@ -478,7 +475,6 @@ describe("ScraperRepository", () => {
       // assert
       ok(mockLogger.info.calledWith("[ScraperRepository.loginToPartsCheck] completed with a [Failure]."));
       ok(getScraperConfigStub.calledOnceWith());
-      ok(pageCloseStub.calledOnceWith());
       deepEqual(result, new Left(expectedFailure));
     });
 
@@ -513,7 +509,6 @@ describe("ScraperRepository", () => {
       ok(mockLogger.info.calledWith("[ScraperRepository.loginToPartsCheck] completed with a [Failure]."));
       ok(mockLogger.warn.calledWith(failure.message));
       ok(mockLogger.error.calledWith(err));
-      ok(pageCloseStub.calledOnceWith());
       deepEqual(result, new Left(failure));
     });
 
@@ -546,7 +541,6 @@ describe("ScraperRepository", () => {
       const result = await repository.loginToPartsCheck(mockPage);
 
       // assert
-      ok(pageCloseStub.calledOnceWith());
       ok(mockLogger.info.calledWith("[ScraperRepository.loginToPartsCheck] completed with a [Failure]."));
       ok(mockLogger.warn.calledWith(failure.message));
       ok(mockLogger.error.calledWith(err));
@@ -581,7 +575,6 @@ describe("ScraperRepository", () => {
       const result = await repository.loginToPartsCheck(mockPage);
 
       // assert
-      ok(pageCloseStub.calledOnceWith());
       ok(mockLogger.info.calledWith("[ScraperRepository.loginToPartsCheck] completed with a [Failure]."));
       ok(mockLogger.warn.calledWith(failure.message));
       ok(mockLogger.error.calledWith(err));
@@ -637,7 +630,6 @@ describe("ScraperRepository", () => {
 
       // assert
       ok(waitForStub.calledOnceWith({ state: "visible" }));
-      ok(pageCloseStub.calledOnceWith());
       ok(mockLogger.info.calledWith("[ScraperRepository.loginToPartsCheck] completed with a [Failure]."));
       ok(mockLogger.warn.calledOnceWith(expectedFailure.message));
       ok(mockLogger.error.calledOnceWith(err));

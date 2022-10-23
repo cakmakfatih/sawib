@@ -183,15 +183,12 @@ class ScraperRepositoryImpl implements ScraperRepository {
       const getScraperConfigFailure = scraperConfigOrFailure.value;
       this.logger.info("[ScraperRepository.loginToPartsCheck] completed with a [Failure].");
 
-      await page.close();
-
       return new Left(getScraperConfigFailure);
     }
 
     const navigatedToUrlOrFailed = await safePromise<null | Response>(() => page.goto(PARTS_CHECK_LOGIN_URL));
 
     if (navigatedToUrlOrFailed.isLeft()) {
-      await page.close();
 
       const navigationErr = navigatedToUrlOrFailed.value;
 
@@ -211,8 +208,6 @@ class ScraperRepositoryImpl implements ScraperRepository {
     });
 
     if (filledInputsOrFailed.isLeft()) {
-      await page.close();
-
       const fillInputFailure: ScraperFailure = filledInputsOrFailed.value;
       const fillInputErr = fillInputFailure.error;
 
@@ -226,8 +221,6 @@ class ScraperRepositoryImpl implements ScraperRepository {
     const clickedOrFailed = await safePromise<void>(() => page.click(Selectors.loginBtn));
 
     if (clickedOrFailed.isLeft()) {
-      await page.close();
-
       const clickErr = clickedOrFailed.value;
 
       this.logger.info("[ScraperRepository.loginToPartsCheck] completed with a [Failure].");
@@ -242,8 +235,6 @@ class ScraperRepositoryImpl implements ScraperRepository {
     const authenticatedOrFailed = await safePromise<void>(() => authenticationLocator.waitFor({ state: "visible" }));
 
     if (authenticatedOrFailed.isLeft()) {
-      await page.close();
-
       const waitForErr = authenticatedOrFailed.value;
 
       this.logger.info("[ScraperRepository.loginToPartsCheck] completed with a [Failure].");
@@ -291,7 +282,6 @@ class ScraperRepositoryImpl implements ScraperRepository {
     }
 
     this.logger.info(`[ScraperRepository.savePartNumbersAsCsv] saved CSV file to ${pathToSave}.`);
-
     this.logger.info("[ScraperRepository.savePartNumbersAsCsv] completed.");
 
     return new Right(true);
