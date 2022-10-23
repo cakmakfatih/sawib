@@ -14,6 +14,7 @@ import path from 'path';
 import safeCall from '../../../../utils/safeCall';
 import { ILaunchBotController } from '../../../../features/bot/domain/usecases/LaunchBotController';
 import BotControllerImpl from '../../../../features/bot/presentation/controllers/BotController';
+import VehicleInfo from '../../domain/entities/VehicleInfo';
 
 
 export const SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE = "Failed while running [launchBotController] from [ScraperRepository].";
@@ -99,6 +100,10 @@ class ScraperRepositoryImpl implements ScraperRepository {
     this.logger.info("[ScraperRepository.getPartNumbers] completed.");
 
     return new Right(partNumberValues);
+  }
+
+  getVehicleInfos(botController: BotControllerImpl): Promise<Either<Failure, VehicleInfo[]>> {
+    throw new Error('Method not implemented.');
   }
 
   async scrapePartNumbers(url: string): Promise<Either<Failure, boolean>> {
