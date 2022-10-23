@@ -13,7 +13,7 @@ import moment from 'moment';
 import path from 'path';
 import safeCall from '../../../../utils/safeCall';
 import { ILaunchBotController } from '../../../../features/bot/domain/usecases/LaunchBotController';
-import BotControllerImpl from 'main/features/bot/presentation/controllers/BotController';
+import BotControllerImpl from '../../../../features/bot/presentation/controllers/BotController';
 
 
 export const SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE = "Failed while running [launchBotController] from [ScraperRepository].";
@@ -57,12 +57,69 @@ class ScraperRepositoryImpl implements ScraperRepository {
     this.launchBotController = launchBotController;
   }
 
-  getPartNumbers({ botController, url }: { botController: BotControllerImpl; url: string; }): Promise<Either<Failure, string[]>> {
-    throw new Error('Method not implemented.');
-  }
+  async getPartNumbers({ botController, url }: { botController: BotControllerImpl; url: string; }): Promise<Either<Failure, string[]>> {
+    this.logger.info("[ScraperRepository.getPartNumbers] started.");
 
-  savePartNumbers(partNumbers: string[]): Promise<Either<Failure, boolean>> {
-    throw new Error('Method not implemented.');
+    const page = botController.pages[0];
+
+    const loggedInOrFailed = await this.loginToPartsCheck(page);
+
+    if (loggedInOrFailed.isLeft()) {
+      this.logger.info("[ScraperRepository.getPartNumbers] completed with a [Failure].");
+      this.logger.warn(SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE);
+
+      return new Left(loggedInOrFailed.value);
+    }
+
+    const navigatedToUrlOrFailed = await safePromise<null | Response>(() => page.goto(url));
+
+    if (navigatedToUrlOrFailed.isLeft()) {
+      const navigationErr = navigatedToUrlOrFailed.value;
+
+      this.logger.info("[ScraperRepository.getPartNumbers] completed with a [Failure].");
+      this.logger.warn(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE);
+      this.logger.error(navigationErr);
+
+      return new Left(new ScraperFailure(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, navigationErr));
+    }
+
+    const partNumbersLocator = page.locator(Selectors.partNumberInp);
+    const partNumberInpElementsOrFailure = await safePromise<ElementHandle<Node>[]>(() => partNumbersLocator.elementHandles());
+
+    if (partNumberInpElementsOrFailure.isLeft()) {
+      const elementHandlesErr = partNumberInpElementsOrFailure.value;
+
+      this.logger.info("[ScraperRepository.getPartNumbers] completed with a [Failure].");
+      this.logger.warn(SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE);
+      this.logger.error(elementHandlesErr);
+
+      return new Left(new ScraperFailure(SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, elementHandlesErr));
+    }
+
+    const partNumberInpElements = partNumberInpElementsOrFailure.value;
+    const partNumberValues: string[] = [];
+
+    for (let partNumberInp of partNumberInpElements) {
+      const partNumberOrFailure = await safePromise<string | null>(() => partNumberInp.getAttribute("value"));
+
+      if (partNumberOrFailure.isLeft()) {
+        const getAttributeErr = partNumberOrFailure.value;
+
+        this.logger.info("[ScraperRepository.getPartNumbers] completed with a [Failure].");
+        this.logger.warn(SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE);
+        this.logger.error(getAttributeErr);
+
+        return new Left(new ScraperFailure(SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, getAttributeErr));
+      }
+
+      const partNumber = partNumberOrFailure.value;
+
+      partNumberValues.push(partNumber ?? "");
+    }
+
+    this.logger.info("[ScraperRepository.getPartNumbers] completed.");
+
+    return new Right(partNumberValues);
   }
 
   async scrapePartNumbers(url: string): Promise<Either<Failure, boolean>> {
@@ -79,99 +136,42 @@ class ScraperRepositoryImpl implements ScraperRepository {
       return new Left(failure);
     }
 
-    const bot = botOrFailure.value;
+    const botController = botOrFailure.value;
+    const { stealthBrowser } = botController;
 
-    const page = bot.pages[0];
+    const partNumbersOrFailure = await this.getPartNumbers({ botController, url });
 
-    const loggedInOrFailed = await this.loginToPartsCheck(page);
+    if (partNumbersOrFailure.isLeft()) {
+      const getPartNumbersFailure = partNumbersOrFailure.value;
 
-    if (loggedInOrFailed.isLeft()) {
-      await bot.stealthBrowser.context.close();
-      await bot.stealthBrowser.browser.close();
-
-      this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
-      this.logger.warn(SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE);
-
-      return new Left(loggedInOrFailed.value);
-    }
-
-    const navigatedToUrlOrFailed = await safePromise<null | Response>(() => page.goto(url));
-
-    if (navigatedToUrlOrFailed.isLeft()) {
-      await bot.stealthBrowser.context.close();
-      await bot.stealthBrowser.browser.close();
-
-      const navigationErr = navigatedToUrlOrFailed.value;
+      await stealthBrowser.context.close();
+      await stealthBrowser.browser.close();
 
       this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
-      this.logger.warn(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE);
-      this.logger.error(navigationErr);
 
-      return new Left(new ScraperFailure(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, navigationErr));
+      return new Left(getPartNumbersFailure);
     }
 
-    const partNumbersLocator = page.locator(Selectors.partNumberInp);
-    const partNumberInpElementsOrFailure = await safePromise<ElementHandle<Node>[]>(() => partNumbersLocator.elementHandles());
-
-    if (partNumberInpElementsOrFailure.isLeft()) {
-      await bot.stealthBrowser.context.close();
-      await bot.stealthBrowser.browser.close();
-
-      const elementHandlesErr = partNumberInpElementsOrFailure.value;
-
-      this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
-      this.logger.warn(SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE);
-      this.logger.error(elementHandlesErr);
-
-      return new Left(new ScraperFailure(SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, elementHandlesErr));
-    }
-
-    const partNumberInpElements = partNumberInpElementsOrFailure.value;
-
-    const partNumberValues: string[] = [];
-
-    for (let partNumberInp of partNumberInpElements) {
-      const partNumberOrFailure = await safePromise<string | null>(() => partNumberInp.getAttribute("value"));
-
-      if (partNumberOrFailure.isLeft()) {
-        await bot.stealthBrowser.context.close();
-        await bot.stealthBrowser.browser.close();
-
-        const getAttributeErr = partNumberOrFailure.value;
-
-        this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
-        this.logger.warn(SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE);
-        this.logger.error(getAttributeErr);
-
-        return new Left(new ScraperFailure(SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, getAttributeErr));
-      }
-
-      const partNumber = partNumberOrFailure.value;
-
-      partNumberValues.push(partNumber ?? "");
-    }
-
-    const partNumbersSavedOrFailed = this.savePartNumbersAsCsv(partNumberValues);
+    const partNumbers = partNumbersOrFailure.value;
+    const partNumbersSavedOrFailed = this.savePartNumbersAsCsv(partNumbers);
 
     if (partNumbersSavedOrFailed.isLeft()) {
       const failure = partNumbersSavedOrFailed.value;
 
-      await bot.stealthBrowser.context.close();
-      await bot.stealthBrowser.browser.close();
+      await stealthBrowser.context.close();
+      await stealthBrowser.browser.close();
 
       this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
 
       return new Left(failure);
     }
 
-    await bot.stealthBrowser.context.close();
-    await bot.stealthBrowser.browser.close();
-
-    const partNumberSaveResult = partNumbersSavedOrFailed.value;
-
     this.logger.info("[ScraperRepository.scrapePartNumbers] completed.");
 
-    return new Right(partNumberSaveResult);
+    await stealthBrowser.context.close();
+    await stealthBrowser.browser.close();
+
+    return new Right(true);
   }
 
   async loginToPartsCheck(page: Page): Promise<Either<Failure, boolean>> {
