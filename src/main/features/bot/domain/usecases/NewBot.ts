@@ -1,8 +1,8 @@
-import { Either } from "@typed-f/either";
-import { Failure } from "../../../../core/error/failures";
-import StealthBrowser from "../../../browser/domain/entities/StealthBrowser";
-import BotController from "../../presentation/controllers/BotController";
-import BotRepository from "../repositories/BotRepository";
+import { Either } from '@typed-f/either';
+import { Failure } from '../../../../core/error/failures';
+import StealthBrowser from '../../../browser/domain/entities/StealthBrowser';
+import BotController from '../../presentation/controllers/BotController';
+import BotRepository from '../repositories/BotRepository';
 
 type NewBotParams = StealthBrowser;
 

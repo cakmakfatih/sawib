@@ -4,7 +4,7 @@ import { Either, Right } from '@typed-f/either';
 import { IGetScraperConfig, GetScraperConfig } from '../../../../../../main/features/scraper/domain/usecases/GetScraperConfig';
 import { Failure } from '../../../../../../main/core/error/failures';
 import ScraperRepository from '../../../../../../main/features/scraper/domain/repositories/ScraperRepository';
-import ScraperConfig from 'main/features/scraper/domain/entities/ScraperConfig';
+import ScraperConfig from '../../../../../../main/features/scraper/domain/entities/ScraperConfig';
 
 const mockRepository = stubInterface<ScraperRepository>();
 

@@ -1,6 +1,6 @@
-import * as log4js from "log4js";
-import { inject, injectable } from "tsyringe";
-import Tokens from "../bin/Tokens";
+import * as log4js from 'log4js';
+import { inject, injectable } from 'tsyringe';
+import Tokens from '../bin/Tokens';
 
 @injectable()
 class Logger {

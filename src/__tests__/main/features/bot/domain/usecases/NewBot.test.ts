@@ -5,7 +5,7 @@ import BotRepository from '../../../../../../main/features/bot/domain/repositori
 import { INewBot, NewBot, NewBotParams } from '../../../../../../main/features/bot/domain/usecases/NewBot';
 import { Failure } from '../../../../../../main/core/error/failures';
 import BotController from '../../../../../../main/features/bot/presentation/controllers/BotController';
-import StealthBrowser from 'main/features/browser/domain/entities/StealthBrowser';
+import StealthBrowser from '../../../../../../main/features/browser/domain/entities/StealthBrowser';
 
 const mockRepository = stubInterface<BotRepository>();
 const mockStealthBrowser: StealthBrowser = stubInterface<StealthBrowser>();

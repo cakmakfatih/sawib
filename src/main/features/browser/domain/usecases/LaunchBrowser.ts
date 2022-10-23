@@ -1,8 +1,8 @@
-import { Either } from "@typed-f/either";
-import { Failure } from "main/core/error/failures";
-import StealthBrowser from "../entities/StealthBrowser";
-import StealthBrowserLaunchOptions from "../entities/StealthBrowserLaunchOptions";
-import BrowserRepository from "../repositories/BrowserRepository";
+import { Either } from '@typed-f/either';
+import { Failure } from 'main/core/error/failures';
+import StealthBrowser from '../entities/StealthBrowser';
+import StealthBrowserLaunchOptions from '../entities/StealthBrowserLaunchOptions';
+import BrowserRepository from '../repositories/BrowserRepository';
 
 type LaunchBrowserParams = StealthBrowserLaunchOptions;
 

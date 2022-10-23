@@ -7,7 +7,7 @@ import StealthBrowser from '../../../../../../main/features/browser/domain/entit
 import { Left, Right } from '@typed-f/either';
 import { BrowserFailure } from '../../../../../../main/core/error/failures';
 import { DEFAULT_ABOUT_CONFIG, DEFAULT_LAUNCH_OPTIONS } from '../../../../../../main/bin/config';
-import StealthBrowserLaunchOptions from 'main/features/browser/domain/entities/StealthBrowserLaunchOptions';
+import StealthBrowserLaunchOptions from '../../../../../../main/features/browser/domain/entities/StealthBrowserLaunchOptions';
 
 const mockFirefox = stubInterface<BrowserType<Browser>>();
 const mockContext = stubInterface<BrowserContext>();
