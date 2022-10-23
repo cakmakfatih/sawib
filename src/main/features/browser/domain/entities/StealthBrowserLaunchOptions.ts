@@ -1,4 +1,4 @@
-import { LaunchOptions } from "playwright-firefox";
+import { LaunchOptions } from 'playwright-firefox';
 
 interface StealthBrowserLaunchOptions extends Omit<LaunchOptions, "proxy"> { }
 

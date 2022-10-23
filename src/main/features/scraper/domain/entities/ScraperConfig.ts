@@ -1,4 +1,4 @@
-import PartsCheckCredentials from "./PartsCheckCredentials";
+import PartsCheckCredentials from './PartsCheckCredentials';
 
 interface ScraperConfig {
   partsCheckCredentials: PartsCheckCredentials;

@@ -1,7 +1,7 @@
-import { Either } from "@typed-f/either";
-import { Failure } from "../../../../core/error/failures";
-import ScraperConfig from "../entities/ScraperConfig";
-import ScraperRepository from "../repositories/ScraperRepository";
+import { Either } from '@typed-f/either';
+import { Failure } from '../../../../core/error/failures';
+import ScraperConfig from '../entities/ScraperConfig';
+import ScraperRepository from '../repositories/ScraperRepository';
 
 type SetScraperConfigParams = ScraperConfig;
 
