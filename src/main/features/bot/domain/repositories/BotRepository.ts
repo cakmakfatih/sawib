@@ -7,6 +7,7 @@ import { Page, BrowserContext } from 'playwright-firefox';
 interface BotRepository {
   newBot(stealthBrowser: StealthBrowser): Promise<Either<Failure, BotController>>;
   createPages(context: BrowserContext): Promise<Either<Failure, Page[]>>;
+  launchBotController(): Promise<Either<Failure, BotController>>;
 }
 
 export default BotRepository;

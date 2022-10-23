@@ -25,6 +25,7 @@ import { ILoginToPartsCheck, LoginToPartsCheck } from '../features/scraper/domai
 import { ISavePartNumbersAsCsv, SavePartNumbersAsCsv } from '../features/scraper/domain/usecases/SavePartNumbersAsCsv';
 import { IScrapePartNumbers, ScrapePartNumbers } from '../features/scraper/domain/usecases/ScrapePartNumbers';
 import { ISetScraperConfig, SetScraperConfig } from '../features/scraper/domain/usecases/SetScraperConfig';
+import { ILaunchBotController, LaunchBotController } from '../features/bot/domain/usecases/LaunchBotController';
 import { SENTRY_DSN_URL } from '../bin/config';
 
 export function initSentry() {
@@ -67,6 +68,9 @@ export function initBot() {
   });
   container.register<INewBot>(Tokens.newBot, {
     useValue: bindDependencies(Tokens.botRepository, NewBot),
+  });
+  container.register<ILaunchBotController>(Tokens.launchBotController, {
+    useValue: bindDependencies(Tokens.botRepository, LaunchBotController),
   });
 }
 
