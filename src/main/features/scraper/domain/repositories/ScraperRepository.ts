@@ -1,10 +1,11 @@
 import { Either } from '@typed-f/either';
+import BotControllerImpl from 'main/features/bot/presentation/controllers/BotController';
 import { Failure } from '../../../../core/error/failures';
 import ScraperConfig from '../entities/ScraperConfig';
 import { LoginToPartsCheckParams } from '../usecases/LoginToPartsCheck';
 
 interface ScraperRepository {
-  getPartNumbers(url: string): Promise<Either<Failure, string[]>>;
+  getPartNumbers({ botController, url }: { botController: BotControllerImpl; url: string; }): Promise<Either<Failure, string[]>>;
   savePartNumbers(partNumbers: string[]): Promise<Either<Failure, boolean>>;
   scrapePartNumbers(url: string): Promise<Either<Failure, boolean>>;
   loginToPartsCheck(params: LoginToPartsCheckParams): Promise<Either<Failure, boolean>>;

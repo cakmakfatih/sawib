@@ -23,8 +23,6 @@ const mockLaunchBotController = sinon.stub();
 const mockStealthBrowser = stubInterface<StealthBrowser>();
 const mockBotController = new BotController(mockStealthBrowser);
 
-const mockBotControllerInitialize = sinon.stub(mockBotController, "initialize");
-
 const closeBrowserSpy = sinon.spy();
 const closeContextSpy = sinon.spy();
 
@@ -61,6 +59,18 @@ const repository = new ScraperRepositoryImpl(
 );
 
 describe("ScraperRepository", () => {
+  describe("getPartNumbers", () => {
+    let loginToPartsCheckStub: sinon.SinonStub;
+
+    beforeAll(() => {
+      loginToPartsCheckStub = sinon.stub(repository, "loginToPartsCheck");
+    });
+
+    beforeEach(() => {
+
+    });
+  });
+
   describe("scrapePartNumbers", () => {
     let loginToPartsCheckStub: sinon.SinonStub;
     let savePartNumbersAsCsv: sinon.SinonStub;
@@ -77,7 +87,6 @@ describe("ScraperRepository", () => {
       mockLaunchBotController.resetHistory();
       closeBrowserSpy.resetHistory();
       closeContextSpy.resetHistory();
-      mockBotControllerInitialize.resetHistory();
       loginToPartsCheckStub.resetHistory();
       pageGoToStub.resetHistory();
       pageLocatorStub.resetHistory();
@@ -88,7 +97,6 @@ describe("ScraperRepository", () => {
     it("should call [Logger.info] correctly", async () => {
       // arrange
       mockLaunchBotController.resolves(new Right(mockBotController));
-      mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
@@ -125,7 +133,6 @@ describe("ScraperRepository", () => {
     it("should call [loginToPartsCheck] with correct params", async () => {
       // arrange
       mockLaunchBotController.resolves(new Right(mockBotController));
-      mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
@@ -141,7 +148,6 @@ describe("ScraperRepository", () => {
     it("should dispose and return [Failure] if [loginToPartsCheck] fails", async () => {
       // arrange
       mockLaunchBotController.resolves(new Right(mockBotController));
-      mockBotControllerInitialize.resolves(new Right(null));
 
       const err = new Error("scraper err");
       const scraperFailure = new ScraperFailure("scraper failure", err);
@@ -161,7 +167,6 @@ describe("ScraperRepository", () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
       mockLaunchBotController.resolves(new Right(mockBotController));
-      mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
@@ -178,7 +183,6 @@ describe("ScraperRepository", () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
       mockLaunchBotController.resolves(new Right(mockBotController));
-      mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       const err = new Error("err");
       pageGoToStub.rejects(err);
@@ -202,7 +206,6 @@ describe("ScraperRepository", () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
       mockLaunchBotController.resolves(new Right(mockBotController));
-      mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
@@ -232,7 +235,6 @@ describe("ScraperRepository", () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
       mockLaunchBotController.resolves(new Right(mockBotController));
-      mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
@@ -267,7 +269,6 @@ describe("ScraperRepository", () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
       mockLaunchBotController.resolves(new Right(mockBotController));
-      mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
@@ -297,7 +298,6 @@ describe("ScraperRepository", () => {
 
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
       mockLaunchBotController.resolves(new Right(mockBotController));
-      mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
@@ -328,7 +328,6 @@ describe("ScraperRepository", () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
       mockLaunchBotController.resolves(new Right(mockBotController));
-      mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
@@ -350,7 +349,6 @@ describe("ScraperRepository", () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
       mockLaunchBotController.resolves(new Right(mockBotController));
-      mockBotControllerInitialize.resolves(new Right(null));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);

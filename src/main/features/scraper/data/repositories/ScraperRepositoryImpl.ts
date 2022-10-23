@@ -13,6 +13,7 @@ import moment from 'moment';
 import path from 'path';
 import safeCall from '../../../../utils/safeCall';
 import { ILaunchBotController } from '../../../../features/bot/domain/usecases/LaunchBotController';
+import BotControllerImpl from 'main/features/bot/presentation/controllers/BotController';
 
 
 export const SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE = "Failed while running [launchBotController] from [ScraperRepository].";
@@ -56,7 +57,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
     this.launchBotController = launchBotController;
   }
 
-  getPartNumbers(url: string): Promise<Either<Failure, string[]>> {
+  getPartNumbers({ botController, url }: { botController: BotControllerImpl; url: string; }): Promise<Either<Failure, string[]>> {
     throw new Error('Method not implemented.');
   }
 

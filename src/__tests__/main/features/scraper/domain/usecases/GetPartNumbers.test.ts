@@ -12,7 +12,7 @@ const usecase: IGetPartNumbers = (params: GetPartNumbersParams) => GetPartNumber
 describe("GetPartNumbers", () => {
   it("should call [ScraperRepository.getPartNumbers] once with correct params", async () => {
     // arrange
-    const params = "url";
+    const params: GetPartNumbersParams = stubInterface<GetPartNumbersParams>();
 
     // act
     await usecase(params);
@@ -23,7 +23,7 @@ describe("GetPartNumbers", () => {
 
   it("should return the value retrieved from [ScraperRepository.getPartNumbers]", async () => {
     // arrange
-    const params = "url";
+    const params: GetPartNumbersParams = stubInterface<GetPartNumbersParams>();
     const repositoryResult: Either<Failure, string[]> = new Right(["pn1", "pn2"]);
     mockRepository.getPartNumbers.resolves(repositoryResult);
 
