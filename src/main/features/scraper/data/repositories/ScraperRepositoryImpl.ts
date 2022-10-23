@@ -57,22 +57,10 @@ class ScraperRepositoryImpl implements ScraperRepository {
     this.launchBotController = launchBotController;
   }
 
-  async getPartNumbers({ botController, url }: { botController: BotControllerImpl; url: string; }): Promise<Either<Failure, string[]>> {
+  async getPartNumbers(botController: BotControllerImpl): Promise<Either<Failure, string[]>> {
     this.logger.info("[ScraperRepository.getPartNumbers] started.");
 
     const page = botController.pages[0];
-
-    const navigatedToUrlOrFailed = await safePromise<null | Response>(() => page.goto(url));
-
-    if (navigatedToUrlOrFailed.isLeft()) {
-      const navigationErr = navigatedToUrlOrFailed.value;
-
-      this.logger.info("[ScraperRepository.getPartNumbers] completed with a [Failure].");
-      this.logger.warn(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE);
-      this.logger.error(navigationErr);
-
-      return new Left(new ScraperFailure(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, navigationErr));
-    }
 
     const partNumbersLocator = page.locator(Selectors.partNumberInp);
     const partNumberInpElementsOrFailure = await safePromise<ElementHandle<Node>[]>(() => partNumbersLocator.elementHandles());
@@ -135,17 +123,34 @@ class ScraperRepositoryImpl implements ScraperRepository {
     if (loggedInOrFailed.isLeft()) {
       const loginFailure = loggedInOrFailed.value;
 
+      this.logger.warn(SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE);
+
       await stealthBrowser.context.close();
       await stealthBrowser.browser.close();
-
-      this.logger.warn(SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE);
 
       this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
 
       return new Left(loginFailure);
     }
 
-    const partNumbersOrFailure = await this.getPartNumbers({ botController, url });
+    const page = botController.pages[0];
+    const navigatedToUrlOrFailed = await safePromise<null | Response>(() => page.goto(url));
+
+    if (navigatedToUrlOrFailed.isLeft()) {
+      const navigationErr = navigatedToUrlOrFailed.value;
+
+      this.logger.warn(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE);
+      this.logger.error(navigationErr);
+
+      await stealthBrowser.context.close();
+      await stealthBrowser.browser.close();
+
+      this.logger.info("[ScraperRepository.scrapePartNumbers] completed with a [Failure].");
+
+      return new Left(new ScraperFailure(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, navigationErr));
+    }
+
+    const partNumbersOrFailure = await this.getPartNumbers(botController);
 
     if (partNumbersOrFailure.isLeft()) {
       const getPartNumbersFailure = partNumbersOrFailure.value;

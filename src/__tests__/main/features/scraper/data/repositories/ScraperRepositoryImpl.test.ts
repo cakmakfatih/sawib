@@ -59,7 +59,7 @@ const repository = new ScraperRepositoryImpl(
 
 describe("ScraperRepository", () => {
   describe("getPartNumbers", () => {
-    let getPartNumbersParams: GetPartNumbersParams = { botController: mockBotController, url: "test-url" };
+    let getPartNumbersParams: GetPartNumbersParams = mockBotController;
 
     beforeEach(() => {
       mockLogger.info.resetHistory();
@@ -83,37 +83,6 @@ describe("ScraperRepository", () => {
       ok(mockLogger.info.calledWith("[ScraperRepository.getPartNumbers] started."));
       ok(mockLogger.info.calledWith("[ScraperRepository.getPartNumbers] completed."));
       equal(mockLogger.info.callCount, 2);
-    });
-
-    it("should call [goto] with correct URL to Quotes using one of the [controller.pages]", async () => {
-      // arrange
-      pageGoToStub.resolves();
-      pageLocatorStub.returns(mockLocator);
-      elementHandlesStub.resolves([]);
-
-      // act
-      await repository.getPartNumbers(getPartNumbersParams);
-
-      // assert
-      ok(pageGoToStub.calledOnceWith(getPartNumbersParams.url));
-    });
-
-    it("should return [ScraperFailure] if navigation to the [page.goto] rejects", async () => {
-      // arrange
-      const err = new Error("err");
-      pageGoToStub.rejects(err);
-
-      const failure = new ScraperFailure(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, err);
-
-      // act
-      const result = await repository.getPartNumbers(getPartNumbersParams);
-
-      // assert
-      ok(pageGoToStub.calledOnceWith(getPartNumbersParams.url));
-      ok(mockLogger.info.calledWith("[ScraperRepository.getPartNumbers] completed with a [Failure]."));
-      ok(mockLogger.warn.calledWith(failure.message));
-      ok(mockLogger.error.calledWith(err));
-      deepEqual(result, new Left(failure));
     });
 
     it("should call [page.locator] on [partNrSelector] to get all elements", async () => {
@@ -244,6 +213,7 @@ describe("ScraperRepository", () => {
       savePartNumbersAsCsvStub.resetHistory();
       getPartNumbersStub.resetHistory();
       loginToPartsCheckStub.resetHistory();
+      pageGoToStub.resetHistory();
     });
 
     it("should call [Logger.info] correctly", async () => {
@@ -252,8 +222,6 @@ describe("ScraperRepository", () => {
       mockLaunchBotController.resolves(new Right(mockBotController));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
-      pageLocatorStub.returns(mockLocator);
-      elementHandlesStub.resolves([]);
       savePartNumbersAsCsvStub.returns(new Right(true));
       getPartNumbersStub.resolves(new Right([""]));
 
@@ -289,6 +257,20 @@ describe("ScraperRepository", () => {
       mockLaunchBotController.resolves(new Right(mockBotController));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
+
+      // act
+      await repository.scrapePartNumbers(params);
+
+      // assert
+      ok(loginToPartsCheckStub.calledOnceWith(mockBotController.pages[0]));
+    });
+
+    it("should call [goto] with correct URL to Quotes using one of the [controller.pages]", async () => {
+      // arrange
+      const params = "test-url";
+      mockLaunchBotController.resolves(new Right(mockBotController));
+      loginToPartsCheckStub.resolves(new Right(true));
+      pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
       elementHandlesStub.resolves([]);
 
@@ -296,7 +278,30 @@ describe("ScraperRepository", () => {
       await repository.scrapePartNumbers(params);
 
       // assert
-      ok(loginToPartsCheckStub.calledOnceWith(mockBotController.pages[0]));
+      ok(pageGoToStub.calledOnceWith(params));
+    });
+
+    it("should return [ScraperFailure] if navigation to the [page.goto] rejects", async () => {
+      // arrange
+      const params = "test-url";
+      mockLaunchBotController.resolves(new Right(mockBotController));
+      loginToPartsCheckStub.resolves(new Right(true));
+      const err = new Error("err");
+      pageGoToStub.rejects(err);
+
+      const failure = new ScraperFailure(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, err);
+
+      // act
+      const result = await repository.scrapePartNumbers(params);
+
+      // assert
+      ok(pageGoToStub.calledOnceWith(params));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapePartNumbers] completed with a [Failure]."));
+      ok(mockLogger.warn.calledWith(failure.message));
+      ok(mockLogger.error.calledWith(err));
+      ok(closeContextSpy.calledOnceWith());
+      ok(closeBrowserSpy.calledOnceWith());
+      deepEqual(result, new Left(failure));
     });
 
     it("should return [Failure] if [loginToPartsCheck] fails", async () => {
@@ -306,6 +311,7 @@ describe("ScraperRepository", () => {
       const scraperFailure = new ScraperFailure("scraper failure", err);
       mockLaunchBotController.resolves(new Right(mockBotController));
       loginToPartsCheckStub.resolves(new Left(scraperFailure));
+      pageGoToStub.resolves();
 
       // act
       const result = await repository.scrapePartNumbers(params);
@@ -324,10 +330,8 @@ describe("ScraperRepository", () => {
       mockLaunchBotController.resolves(new Right(mockBotController));
       loginToPartsCheckStub.resolves(new Right(true));
       getPartNumbersStub.resolves(new Right([""]));
-      const expectedGetPartNumbersParams = {
-        botController: mockBotController,
-        url: params,
-      };
+      pageGoToStub.resolves();
+      const expectedGetPartNumbersParams = mockBotController;
 
       // act
       await repository.scrapePartNumbers(params);
@@ -341,6 +345,7 @@ describe("ScraperRepository", () => {
       const params: ScrapePartNumbersParams = "test-url";
       mockLaunchBotController.resolves(new Right(mockBotController));
       loginToPartsCheckStub.resolves(new Right(true));
+      pageGoToStub.resolves();
       const err = new Error("test-err");
       const expectedFailure = new ScraperFailure("test-failure", err);
       getPartNumbersStub.resolves(new Left(expectedFailure));
@@ -360,6 +365,7 @@ describe("ScraperRepository", () => {
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
       mockLaunchBotController.resolves(new Right(mockBotController));
       loginToPartsCheckStub.resolves(new Right(true));
+      pageGoToStub.resolves();
       const getPartNumbersResult = ["res-1", "res-2"];
       getPartNumbersStub.resolves(new Right(getPartNumbersResult));
 
@@ -376,8 +382,6 @@ describe("ScraperRepository", () => {
       mockLaunchBotController.resolves(new Right(mockBotController));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
-      pageLocatorStub.returns(mockLocator);
-      elementHandlesStub.resolves([]);
       const savePartNumberFailure = new ScraperFailure("test-failure");
       savePartNumbersAsCsvStub.returns(new Left(savePartNumberFailure));
 
@@ -397,8 +401,6 @@ describe("ScraperRepository", () => {
       mockLaunchBotController.resolves(new Right(mockBotController));
       loginToPartsCheckStub.resolves(new Right(true));
       pageGoToStub.resolves();
-      pageLocatorStub.returns(mockLocator);
-      elementHandlesStub.resolves([]);
       savePartNumbersAsCsvStub.returns(new Right(true));
       getPartNumbersStub.resolves(new Right([""]));
       const expectedResult = true;
