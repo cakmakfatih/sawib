@@ -10,7 +10,7 @@ import { INewPage } from '../../../../features/browser/domain/usecases/NewPage';
 import StealthBrowser from '../../../../features/browser/domain/entities/StealthBrowser';
 import { CONCURRENCY } from '../../../../bin/config';
 import sinon from 'sinon';
-import { ILaunchBrowser } from 'main/features/browser/domain/usecases/LaunchBrowser';
+import { ILaunchBrowser } from '../../../../features/browser/domain/usecases/LaunchBrowser';
 
 export const CREATE_PAGES_FAILURE_MESSAGE = "Failed while creating pages.";
 export const LAUNCH_BROWSER_WARNING_MESSAGE = "Failed on [LaunchBrowser] call from [BotRepository].";

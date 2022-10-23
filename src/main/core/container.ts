@@ -70,7 +70,7 @@ export function initBot() {
     useValue: bindDependencies(Tokens.botRepository, NewBot),
   });
   container.register<ILaunchBotController>(Tokens.launchBotController, {
-    useValue: bindDependencies(Tokens.launchBotController, LaunchBotController),
+    useValue: bindDependencies(Tokens.botRepository, LaunchBotController),
   });
 }
 
