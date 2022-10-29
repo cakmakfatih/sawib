@@ -40,6 +40,9 @@ export enum Selectors {
   loginPasswordInp = "#mypass",
   loginBtn = "#loginButton",
   isLoggedIn = "#Xtop-header > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(4) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2) > a:nth-child(1)",
+  vehicleInfosContainer = "body > center > div:nth-child(2) > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr:nth-child(1) > td > div:nth-child(2) > div:nth-child(1) > div.quoteTitleContainer",
+  vehicleInfo = "div.quoteTitle,div.quoteTitleContent:not(:has(> input))",
+  vehicleVinInfo = "div.quoteTitleContent > input",
 }
 
 @injectable()
@@ -102,8 +105,23 @@ class ScraperRepositoryImpl implements ScraperRepository {
     return new Right(partNumberValues);
   }
 
-  getVehicleInfos(botController: BotControllerImpl): Promise<Either<Failure, VehicleInfo[]>> {
-    throw new Error('Method not implemented.');
+  async getVehicleInfos(botController: BotControllerImpl): Promise<Either<Failure, VehicleInfo[]>> {
+    this.logger.info("[ScraperRepository.getVehicleInfos] started.");
+
+    const page = botController.pages[0];
+
+    await this.readVehicleData(page);
+
+    this.logger.info("[ScraperRepository.getVehicleInfos] completed.");
+
+    return new Left(new Failure(""));
+  }
+
+  private async readVehicleData(page: Page): Promise<string[]> {
+    const vehicleInfosContainerLocator = page.locator(Selectors.vehicleInfosContainer);
+    const vehicleInfosLocator = vehicleInfosContainerLocator.locator(Selectors.vehicleInfo);
+
+    return [];
   }
 
   async scrapePartNumbers(url: string): Promise<Either<Failure, boolean>> {

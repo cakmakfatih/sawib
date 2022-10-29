@@ -14,6 +14,7 @@ import ScraperConfig from '../../../../../../main/features/scraper/domain/entiti
 import fs from 'fs';
 import path from 'path';
 import { GetPartNumbersParams } from '../../../../../../main/features/scraper/domain/usecases/GetPartNumbers';
+import { GetVehicleInfosParams } from 'main/features/scraper/domain/usecases/GetVehicleInfos';
 
 const document = new jsdom.JSDOM().window.document;
 
@@ -30,6 +31,10 @@ const closeContextSpy = sinon.spy();
 const mockPage: Page = stubInterface<Page>();
 
 const mockLocator: Locator = stubInterface<Locator>();
+
+const locatorLocatorStub = sinon.stub();
+
+mockLocator.locator = locatorLocatorStub;
 
 const elementHandlesStub = sinon.stub();
 const waitForStub = sinon.stub();
@@ -58,6 +63,103 @@ const repository = new ScraperRepositoryImpl(
 );
 
 describe("ScraperRepository", () => {
+  describe("getVehicleInfos", () => {
+    let getVehicleInfosParams: GetVehicleInfosParams = mockBotController;
+
+    beforeEach(() => {
+      mockLogger.info.resetHistory();
+      mockLogger.warn.resetHistory();
+      mockLogger.error.resetHistory();
+      pageLocatorStub.resetHistory();
+      locatorLocatorStub.resetHistory();
+    });
+
+    it("should call [Logger.info] correctly", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      locatorLocatorStub.returns(mockLocator);
+
+      // act
+      await repository.getVehicleInfos(getVehicleInfosParams);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfos] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfos] completed."));
+      equal(mockLogger.info.callCount, 2);
+    });
+
+    it("should call [page.locator] on [vehicleInfosContainer] to get the vehicle info container", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      locatorLocatorStub.returns(mockLocator);
+
+      // act
+      await repository.getVehicleInfos(getVehicleInfosParams);
+
+      // assert
+      ok(pageLocatorStub.calledOnceWith(Selectors.vehicleInfosContainer));
+    });
+
+    it("should call [page.locator] on [vehicleInfosContainerLocator] with [vehicleInfo] to get each individual part", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      locatorLocatorStub.returns(mockLocator);
+
+      // act
+      await repository.getVehicleInfos(getVehicleInfosParams);
+
+      // assert
+      ok(pageLocatorStub.calledOnceWith(Selectors.vehicleInfosContainer));
+      ok(locatorLocatorStub.calledOnceWith(Selectors.vehicleInfo));
+    });
+
+    it("should call [elementHandles] on [vehicleInfosContainerLocator]", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      locatorLocatorStub.returns(mockLocator);
+
+      const elementHandlesResult: Node[] = [];
+
+      const quoteTitleNodes: Node[] = [];
+      const quoteContentNodes: Node[] = [];
+
+      const quoteTitles: string[] = [
+        "Make", "Model", "Model Nr", "Series", "Trans", "Colour", "VIN", "Body", "Mth/Yr", "Veh Reg", "Claim Nr",
+      ];
+      const quoteContents: string[] = [
+        "Toyota", "Tarago", "ACR50R", "ACR50", "Automatic", "White (C.O.B)", "WAGON", "10/2010", "CPQ85R", "Not Submitted",
+      ];
+
+      for (let i = 0; i < 11; i++) {
+        const quoteTitleEl = document.createElement("div");
+        quoteTitleEl.setAttribute("class", "quoteTitle");
+        quoteTitleEl.innerText = quoteTitles[i];
+
+        quoteTitleNodes.push(quoteTitleEl);
+      }
+
+      for (let i = 0; i < 11; i++) {
+        const quoteContentEl = document.createElement("div");
+        quoteContentEl.setAttribute("class", "quoteTitleContent");
+        quoteContentEl.innerText = quoteContents[i];
+
+        quoteContentNodes.push(quoteContentEl);
+      }
+
+      for (let i = 0; i < (quoteTitleNodes.length + quoteContentNodes.length); i++) {
+        if (i < 13) {
+          elementHandlesResult.push(i % 2 === 0 ? quoteTitleNodes[Math.floor(i / 2)] : quoteContentNodes[Math.floor(i / 2)]);
+        } else {
+          elementHandlesResult.push(i % 2 === 1 ? quoteTitleNodes[Math.ceil(i / 2)] : quoteContentNodes[Math.floor((i - 1) / 2)]);
+        }
+      }
+
+      elementHandlesStub.resolves(elementHandlesResult);
+
+      // act
+    });
+  });
+
   describe("getPartNumbers", () => {
     let getPartNumbersParams: GetPartNumbersParams = mockBotController;
 
@@ -65,13 +167,11 @@ describe("ScraperRepository", () => {
       mockLogger.info.resetHistory();
       mockLogger.warn.resetHistory();
       mockLogger.error.resetHistory();
-      pageLocatorStub.resetHistory();
       elementHandlesStub.resetHistory();
     });
 
     it("should call [Logger.info] correctly", async () => {
       // arrange
-      pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
       elementHandlesStub.resolves([]);
 
@@ -84,9 +184,8 @@ describe("ScraperRepository", () => {
       equal(mockLogger.info.callCount, 2);
     });
 
-    it("should call [page.locator] on [partNrSelector] to get all elements", async () => {
+    it("should call [page.locator] on [partNrSelector] to get all elements with [elementHandles]", async () => {
       // arrange
-      pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
 
       const nodes: Node[] = [];
@@ -112,7 +211,6 @@ describe("ScraperRepository", () => {
 
     it("should log correctly return a [Failure] if [elementHandles] rejects", async () => {
       // arrange
-      pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
       const err = new Error("test-err");
       const expectedFailure = new ScraperFailure(SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, err);
@@ -136,7 +234,6 @@ describe("ScraperRepository", () => {
       const getAttributeStub = sinon.stub();
       node.getAttribute = getAttributeStub;
 
-      pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
       const err = new Error("test-err");
       getAttributeStub.rejects(err);
@@ -161,7 +258,6 @@ describe("ScraperRepository", () => {
 
     it("should return [partNumbers<string[]>] if everything ran without an issue and dispose browser", async () => {
       // arrange
-      pageGoToStub.resolves();
       pageLocatorStub.returns(mockLocator);
 
       const nodes: Node[] = [];
