@@ -9,15 +9,12 @@ import { BotFailure, BrowserFailure, Failure } from '../../../../core/error/fail
 import { INewPage } from '../../../../features/browser/domain/usecases/NewPage';
 import StealthBrowser from '../../../../features/browser/domain/entities/StealthBrowser';
 import { CONCURRENCY } from '../../../../bin/config';
-import sinon from 'sinon';
 import { ILaunchBrowser } from '../../../../features/browser/domain/usecases/LaunchBrowser';
 
 export const CREATE_PAGES_FAILURE_MESSAGE = "Failed while creating pages.";
 export const LAUNCH_BROWSER_WARNING_MESSAGE = "Failed on [LaunchBrowser] call from [BotRepository].";
 export const NEW_BOT_WARNING_MESSAGE = "Failed on [NewBot] call made from [BotRepository].";
 export const BOT_CONTROLLER_INITIALIZE_WARNING_MESSAGE = "Failed on [BotController.initialize] call made from [BotRepository].";
-
-sinon.stub(BotController);
 
 @injectable()
 class BotRepositoryImpl implements BotRepository {
