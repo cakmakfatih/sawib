@@ -120,6 +120,10 @@ class ScraperRepositoryImpl implements ScraperRepository {
   private async readVehicleData(page: Page): Promise<string[]> {
     const vehicleInfosContainerLocator = page.locator(Selectors.vehicleInfosContainer);
     const vehicleInfosLocator = vehicleInfosContainerLocator.locator(Selectors.vehicleInfo);
+    const vehicleVinInfoLocator = vehicleInfosContainerLocator.locator(Selectors.vehicleVinInfo);
+
+    await vehicleVinInfoLocator.elementHandle();
+    await vehicleInfosLocator.elementHandles();
 
     return [];
   }

@@ -37,9 +37,11 @@ const locatorLocatorStub = sinon.stub();
 mockLocator.locator = locatorLocatorStub;
 
 const elementHandlesStub = sinon.stub();
+const elementHandleStub = sinon.stub();
 const waitForStub = sinon.stub();
 
 mockLocator.elementHandles = elementHandlesStub;
+mockLocator.elementHandle = elementHandleStub;
 mockLocator.waitFor = waitForStub;
 
 const pageGoToStub = sinon.stub();
@@ -64,61 +66,8 @@ const repository = new ScraperRepositoryImpl(
 
 describe("ScraperRepository", () => {
   describe("getVehicleInfos", () => {
-    let getVehicleInfosParams: GetVehicleInfosParams = mockBotController;
-
-    beforeEach(() => {
-      mockLogger.info.resetHistory();
-      mockLogger.warn.resetHistory();
-      mockLogger.error.resetHistory();
-      pageLocatorStub.resetHistory();
-      locatorLocatorStub.resetHistory();
-    });
-
-    it("should call [Logger.info] correctly", async () => {
-      // arrange
-      pageLocatorStub.returns(mockLocator);
-      locatorLocatorStub.returns(mockLocator);
-
-      // act
-      await repository.getVehicleInfos(getVehicleInfosParams);
-
-      // assert
-      ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfos] started."));
-      ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfos] completed."));
-      equal(mockLogger.info.callCount, 2);
-    });
-
-    it("should call [page.locator] on [vehicleInfosContainer] to get the vehicle info container", async () => {
-      // arrange
-      pageLocatorStub.returns(mockLocator);
-      locatorLocatorStub.returns(mockLocator);
-
-      // act
-      await repository.getVehicleInfos(getVehicleInfosParams);
-
-      // assert
-      ok(pageLocatorStub.calledOnceWith(Selectors.vehicleInfosContainer));
-    });
-
-    it("should call [page.locator] on [vehicleInfosContainerLocator] with [vehicleInfo] to get each individual part", async () => {
-      // arrange
-      pageLocatorStub.returns(mockLocator);
-      locatorLocatorStub.returns(mockLocator);
-
-      // act
-      await repository.getVehicleInfos(getVehicleInfosParams);
-
-      // assert
-      ok(pageLocatorStub.calledOnceWith(Selectors.vehicleInfosContainer));
-      ok(locatorLocatorStub.calledOnceWith(Selectors.vehicleInfo));
-    });
-
-    it("should call [elementHandles] on [vehicleInfosContainerLocator]", async () => {
-      // arrange
-      pageLocatorStub.returns(mockLocator);
-      locatorLocatorStub.returns(mockLocator);
-
-      const elementHandlesResult: Node[] = [];
+    function setElementHandleResults() {
+      const quoteTitleAndContainersResult: Node[] = [];
 
       const quoteTitleNodes: Node[] = [];
       const quoteContentNodes: Node[] = [];
@@ -148,15 +97,92 @@ describe("ScraperRepository", () => {
 
       for (let i = 0; i < (quoteTitleNodes.length + quoteContentNodes.length); i++) {
         if (i < 13) {
-          elementHandlesResult.push(i % 2 === 0 ? quoteTitleNodes[Math.floor(i / 2)] : quoteContentNodes[Math.floor(i / 2)]);
+          quoteTitleAndContainersResult.push(i % 2 === 0 ? quoteTitleNodes[Math.floor(i / 2)] : quoteContentNodes[Math.floor(i / 2)]);
         } else {
-          elementHandlesResult.push(i % 2 === 1 ? quoteTitleNodes[Math.ceil(i / 2)] : quoteContentNodes[Math.floor((i - 1) / 2)]);
+          quoteTitleAndContainersResult.push(i % 2 === 1 ? quoteTitleNodes[Math.ceil(i / 2)] : quoteContentNodes[Math.floor((i - 1) / 2)]);
         }
       }
 
-      elementHandlesStub.resolves(elementHandlesResult);
+      const vehicleVinValueContainer = document.createElement("div");
+      vehicleVinValueContainer.setAttribute("class", "quoteTitleContent");
+
+      const vehicleVinInputEl = document.createElement("input");
+      vehicleVinInputEl.setAttribute("value", "JTEGD52M10A025060");
+
+      vehicleVinValueContainer.appendChild(vehicleVinInputEl);
+
+      elementHandlesStub.resolves(quoteTitleAndContainersResult);
+      elementHandleStub.resolves(vehicleVinValueContainer);
+    }
+
+    let getVehicleInfosParams: GetVehicleInfosParams = mockBotController;
+
+    beforeEach(() => {
+      mockLogger.info.resetHistory();
+      mockLogger.warn.resetHistory();
+      mockLogger.error.resetHistory();
+      pageLocatorStub.resetHistory();
+      locatorLocatorStub.resetHistory();
+      elementHandlesStub.resetHistory();
+      elementHandleStub.resetHistory();
+    });
+
+    it("should call [Logger.info] correctly", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      locatorLocatorStub.returns(mockLocator);
+      setElementHandleResults();
 
       // act
+      await repository.getVehicleInfos(getVehicleInfosParams);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfos] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfos] completed."));
+      equal(mockLogger.info.callCount, 2);
+    });
+
+    it("should call [page.locator] on [vehicleInfosContainer] to get the vehicle info container", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      locatorLocatorStub.returns(mockLocator);
+      setElementHandleResults();
+
+      // act
+      await repository.getVehicleInfos(getVehicleInfosParams);
+
+      // assert
+      ok(pageLocatorStub.calledOnceWith(Selectors.vehicleInfosContainer));
+    });
+
+    it("should call [page.locator] on [vehicleInfosContainerLocator] with [vehicleInfo] & [vehicleVinInfo] to get each individual part", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      locatorLocatorStub.returns(mockLocator);
+      setElementHandleResults();
+
+      // act
+      await repository.getVehicleInfos(getVehicleInfosParams);
+
+      // assert
+      ok(pageLocatorStub.calledOnceWith(Selectors.vehicleInfosContainer));
+      ok(locatorLocatorStub.calledWith(Selectors.vehicleInfo));
+      ok(locatorLocatorStub.calledWith(Selectors.vehicleVinInfo));
+      equal(locatorLocatorStub.callCount, 2);
+    });
+
+    it("should call [elementHandles] on [vehicleInfosContainerLocator] and [elementHandle] on [vehicleVinInfoLocator]", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      locatorLocatorStub.returns(mockLocator);
+      setElementHandleResults();
+
+      // act
+      await repository.getVehicleInfos(getVehicleInfosParams);
+
+      // assert
+      ok(elementHandlesStub.calledOnceWith());
+      ok(elementHandleStub.calledOnceWith());
     });
   });
 
