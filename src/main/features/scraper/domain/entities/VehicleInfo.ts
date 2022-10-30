@@ -1,6 +1,6 @@
 interface VehicleInfo {
-  partText: string;
-  partNumber: string;
+  partText?: string;
+  partNumber?: string;
   make: string;
   model: string;
   modelNr: string;
@@ -9,9 +9,9 @@ interface VehicleInfo {
   colour: string;
   vin: string;
   body: string;
-  quoteDate: string;
+  mthYr: string;
   vehReg: string;
-  claimNumber: string;
+  claimNr: string;
 }
 
 export default VehicleInfo;

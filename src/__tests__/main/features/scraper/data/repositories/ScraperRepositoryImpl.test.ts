@@ -15,6 +15,7 @@ import fs from 'fs';
 import path from 'path';
 import { GetPartNumbersParams } from '../../../../../../main/features/scraper/domain/usecases/GetPartNumbers';
 import { GetVehicleInfoParams } from 'main/features/scraper/domain/usecases/GetVehicleInfo';
+import VehicleInfo from 'main/features/scraper/domain/entities/VehicleInfo';
 
 const document = new jsdom.JSDOM().window.document;
 
@@ -67,10 +68,10 @@ const repository = new ScraperRepositoryImpl(
 describe("ScraperRepository", () => {
   describe("getVehicleInfo", () => {
     function setElementHandleResults() {
-      const quoteTitleAndContainersResult: Node[] = [];
+      const quoteTitleAndContainersResult = [];
 
-      const quoteTitleNodes: Node[] = [];
-      const quoteContentNodes: Node[] = [];
+      const quoteTitleNodes = [];
+      const quoteContentNodes = [];
 
       const quoteTitles: string[] = [
         "Make", "Model", "Model Nr", "Series", "Trans", "Colour", "VIN", "Body", "Mth/Yr", "Veh Reg", "Claim Nr",
@@ -79,43 +80,61 @@ describe("ScraperRepository", () => {
         "Toyota", "Tarago", "ACR50R", "ACR50", "Automatic", "White (C.O.B)", "WAGON", "10/2010", "CPQ85R", "Not Submitted",
       ];
 
-      for (let i = 0; i < 11; i++) {
+      for (let i = 0; i < quoteTitles.length; i++) {
         const quoteTitleEl = document.createElement("div");
+
         quoteTitleEl.setAttribute("class", "quoteTitle");
         quoteTitleEl.innerText = quoteTitles[i];
 
-        quoteTitleNodes.push(quoteTitleEl);
+        const quoteTitleHandleMock = { ...quoteTitleEl, textContent: () => Promise.resolve(quoteTitles[i]) };
+
+        quoteTitleNodes.push(quoteTitleHandleMock);
       }
 
-      for (let i = 0; i < 11; i++) {
+      for (let i = 0; i < quoteContents.length; i++) {
         const quoteContentEl = document.createElement("div");
+
         quoteContentEl.setAttribute("class", "quoteTitleContent");
         quoteContentEl.innerText = quoteContents[i];
 
-        quoteContentNodes.push(quoteContentEl);
+        const quoteContentHandleMock = { ...quoteContentEl, textContent: () => Promise.resolve(quoteContents[i]) };
+
+        quoteContentNodes.push(quoteContentHandleMock);
       }
 
       for (let i = 0; i < (quoteTitleNodes.length + quoteContentNodes.length); i++) {
+        let nodeToPush: any;
+
         if (i < 13) {
-          quoteTitleAndContainersResult.push(i % 2 === 0 ? quoteTitleNodes[Math.floor(i / 2)] : quoteContentNodes[Math.floor(i / 2)]);
+          nodeToPush = i % 2 === 0 ? quoteTitleNodes[i / 2] : quoteContentNodes[Math.floor(i / 2)];
         } else {
-          quoteTitleAndContainersResult.push(i % 2 === 1 ? quoteTitleNodes[Math.ceil(i / 2)] : quoteContentNodes[Math.floor((i - 1) / 2)]);
+          nodeToPush = i % 2 === 1 ? quoteTitleNodes[Math.ceil(i / 2)] : quoteContentNodes[Math.floor((i - 1) / 2)];
         }
+
+        quoteTitleAndContainersResult.push(nodeToPush);
       }
 
-      const vehicleVinValueContainer = document.createElement("div");
-      vehicleVinValueContainer.setAttribute("class", "quoteTitleContent");
-
       const vehicleVinInputEl = document.createElement("input");
-      vehicleVinInputEl.setAttribute("value", "JTEGD52M10A025060");
-
-      vehicleVinValueContainer.appendChild(vehicleVinInputEl);
+      vehicleVinInputEl.setAttribute("value", "JTEGD52M10A025060")
 
       elementHandlesStub.resolves(quoteTitleAndContainersResult);
-      elementHandleStub.resolves(vehicleVinValueContainer);
+      elementHandleStub.resolves(vehicleVinInputEl);
     }
 
     let getVehicleInfosParams: GetVehicleInfoParams = mockBotController;
+    let expectedVehicleInfo: VehicleInfo = {
+      make: "Toyota",
+      model: "Tarago",
+      modelNr: "ACR50R",
+      series: "ACR50",
+      trans: "Automatic",
+      colour: "White (C.O.B)",
+      vin: "JTEGD52M10A025060",
+      body: "WAGON",
+      mthYr: "10/2010",
+      vehReg: "CPQ85R",
+      claimNr: "Not Submitted",
+    };
 
     beforeEach(() => {
       mockLogger.info.resetHistory();
@@ -185,11 +204,11 @@ describe("ScraperRepository", () => {
       ok(elementHandleStub.calledOnceWith());
     });
 
-    it("should return a [Failure] if element(s) fail to resolve", async () => {
+    it("should return a [Failure] if [handleVehicleInfoScraping] throws", async () => {
       // arrange
-      setElementHandleResults();
       pageLocatorStub.returns(mockLocator);
       locatorLocatorStub.returns(mockLocator);
+      setElementHandleResults();
       const err = new Error("test-err");
       elementHandleStub.rejects(err);
 
@@ -197,10 +216,23 @@ describe("ScraperRepository", () => {
       const result = await repository.getVehicleInfo(getVehicleInfosParams);
 
       // assert
-      ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfo] completed with a [Failure]."));;
+      ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfo] completed with a [Failure]."));
       ok(mockLogger.error.calledOnceWith(err));
       ok(mockLogger.warn.calledOnceWith(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE));
       deepEqual(result, new Left(new ScraperFailure(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE, err)));
+    });
+
+    it("should return expected [VehicleInfo]", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      locatorLocatorStub.returns(mockLocator);
+      setElementHandleResults();
+
+      // act
+      const result = await repository.getVehicleInfo(getVehicleInfosParams);
+
+      // assert
+      deepEqual(result, new Right(expectedVehicleInfo));
     });
   });
 

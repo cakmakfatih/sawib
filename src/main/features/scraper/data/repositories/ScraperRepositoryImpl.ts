@@ -112,7 +112,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
     const page = botController.pages[0];
 
-    const vehicleInfoDataOrError = await safePromise<VehicleInfo | null>(() => this.handleVehicleInfoScraping(page));
+    const vehicleInfoDataOrError = await safePromise<VehicleInfo>(() => this.handleVehicleInfoScraping(page));
 
     if (vehicleInfoDataOrError.isLeft()) {
       const vehicleInfoErr = vehicleInfoDataOrError.value;
@@ -124,9 +124,11 @@ class ScraperRepositoryImpl implements ScraperRepository {
       return new Left(new ScraperFailure(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE, vehicleInfoErr));
     }
 
+    const vehicleInfo = vehicleInfoDataOrError.value;
+
     this.logger.info("[ScraperRepository.getVehicleInfo] completed.");
 
-    return new Left(new Failure(""));
+    return new Right(vehicleInfo);
   }
 
   private async handleVehicleInfoScraping(page: Page): Promise<VehicleInfo> {
@@ -134,11 +136,42 @@ class ScraperRepositoryImpl implements ScraperRepository {
     const vehicleInfoLocator = vehicleInfoContainerLocator.locator(Selectors.vehicleInfoDivs);
     const vehicleVinInfoLocator = vehicleInfoContainerLocator.locator(Selectors.vehicleVinInfo);
 
-    await vehicleInfoLocator.elementHandles();
-    await vehicleVinInfoLocator.elementHandle();
+    const vehicleInfoTxtResults: string[] = [];
 
-    //! TO DO: RETURN [VehicleInfo]
-    return null!;
+    const vehicleInfoDivs = await vehicleInfoLocator.elementHandles();
+
+    let unformattedVehicleInfo: { [key: string]: string } = {};
+
+    for (let div of vehicleInfoDivs) {
+      const txtContent = await div.textContent();
+
+      if (txtContent !== "VIN")
+        vehicleInfoTxtResults.push(txtContent ?? "");
+    }
+
+    for (let i = 0; i < vehicleInfoTxtResults.length; i += 2) {
+      unformattedVehicleInfo[vehicleInfoTxtResults[i]] = vehicleInfoTxtResults[i + 1];
+    }
+
+    const vehicleVinValueInp = await vehicleVinInfoLocator.elementHandle();
+
+    unformattedVehicleInfo["VIN"] = await vehicleVinValueInp?.getAttribute("value") ?? "";
+
+    const formattedVehicleInfo: VehicleInfo = {
+      make: unformattedVehicleInfo["Make"],
+      model: unformattedVehicleInfo["Model"],
+      modelNr: unformattedVehicleInfo["Model Nr"],
+      series: unformattedVehicleInfo["Series"],
+      trans: unformattedVehicleInfo["Trans"],
+      colour: unformattedVehicleInfo["Colour"],
+      body: unformattedVehicleInfo["Body"],
+      mthYr: unformattedVehicleInfo["Mth/Yr"],
+      vehReg: unformattedVehicleInfo["Veh Reg"],
+      claimNr: unformattedVehicleInfo["Claim Nr"],
+      vin: unformattedVehicleInfo["VIN"],
+    };
+
+    return formattedVehicleInfo;
   }
 
   async scrapePartNumbers(url: string): Promise<Either<Failure, boolean>> {
