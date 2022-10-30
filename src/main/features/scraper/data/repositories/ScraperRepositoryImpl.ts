@@ -32,7 +32,10 @@ export const FS_WRITE_FILE_SYNC_FAILURE_MESSAGE = "Failed while running [<fs>.wr
 export const SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE = "Failed while running [<localDataSource>.setScraperConfig].";
 export const SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE = "Failed while running [<localDataSource>.getScraperConfig].";
 
-export const SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE = "Failed while running [ScraperRepository.getVehicleInfoData].";
+export const SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE = "Failed while running [ScraperRepository.getPartRows].";
+export const SCRAPER_GET_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE = "Failed while running [ScraperRepository.getPartTextsFromPartRows].";
+
+export const SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE_MESSAGE = "Failed while running [ScraperRepository.getVehicleInfoData].";
 
 export const PARTS_CHECK_LOGIN_URL = "https://partscheck.com.au/global/login.php";
 
@@ -111,9 +114,59 @@ class ScraperRepositoryImpl implements ScraperRepository {
   async getPartTexts(botController: BotControllerImpl): Promise<Either<Failure, string[]>> {
     this.logger.info("[ScraperRepository.getPartTextsParams] started.");
 
+    const page = botController.pages[0];
+
+    const partRowsOrError = await safePromise<ElementHandle<Node>[]>(() => this.getPartRows(page));
+
+    if (partRowsOrError.isLeft()) {
+      const partRowsErr = partRowsOrError.value;
+
+      this.logger.error(partRowsErr);
+      this.logger.warn(SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE);
+      this.logger.info("[ScraperRepository.getPartTextsParams] completed with a [Failure].");
+
+      return new Left(new ScraperFailure(SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE, partRowsErr));
+    }
+
+    const partRows = partRowsOrError.value;
+
+    const partTextsOrError = await safePromise<string[]>(() => this.getPartTextsFromPartRows(partRows));
+
+    if (partTextsOrError.isLeft()) {
+      const partTextsErr = partTextsOrError.value;
+
+      this.logger.error(partTextsErr);
+      this.logger.warn(SCRAPER_GET_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE);
+      this.logger.info("[ScraperRepository.getPartTextsParams] completed with a [Failure].");
+
+      return new Left(new ScraperFailure(SCRAPER_GET_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE, partTextsErr));
+    }
+
+    const partTexts = partTextsOrError.value;
+
     this.logger.info("[ScraperRepository.getPartTextsParams] completed.");
 
-    return new Left(new Failure(""));
+    return new Right(partTexts);
+  }
+
+  private async getPartTextsFromPartRows(partRows: ElementHandle<Node>[]): Promise<string[]> {
+    const partTexts = [];
+
+    for (let partRow of partRows) {
+      partTexts.push(await this.getPartTextFromPartRow(partRow));
+    }
+
+    return partTexts;
+  }
+
+  private async getPartTextFromPartRow(partRow: ElementHandle<Node>): Promise<string> {
+    return await partRow.getAttribute("data-parttext") ?? "";
+  }
+
+  private async getPartRows(page: Page): Promise<ElementHandle<Node>[]> {
+    const partRowsLocator = page.locator(Selectors.partRowTr);
+
+    return await partRowsLocator.elementHandles();
   }
 
   async getVehicleInfo(botController: BotControllerImpl): Promise<Either<Failure, VehicleInfo>> {
@@ -126,11 +179,11 @@ class ScraperRepositoryImpl implements ScraperRepository {
     if (vehicleInfoDataOrError.isLeft()) {
       const vehicleInfoErr = vehicleInfoDataOrError.value;
 
-      this.logger.warn(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE);
+      this.logger.warn(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE_MESSAGE);
       this.logger.error(vehicleInfoErr);
       this.logger.info("[ScraperRepository.getVehicleInfo] completed with a [Failure].");
 
-      return new Left(new ScraperFailure(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE, vehicleInfoErr));
+      return new Left(new ScraperFailure(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE_MESSAGE, vehicleInfoErr));
     }
 
     const vehicleInfo = vehicleInfoDataOrError.value;

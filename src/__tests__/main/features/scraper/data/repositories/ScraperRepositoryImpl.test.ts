@@ -1,6 +1,6 @@
 import Logger from '../../../../../../main/core/Logger';
 import sinon, { stubInterface } from 'ts-sinon';
-import ScraperRepositoryImpl, { FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE, SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, SCRAPER_PAGE_FILL_FAILURE_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
+import ScraperRepositoryImpl, { FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE, SCRAPER_GET_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE, SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE_MESSAGE, SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, SCRAPER_PAGE_FILL_FAILURE_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
 import ScraperLocalDataSource from '../../../../../../main/features/scraper/data/datasources/ScraperLocalDataSource';
 import { deepEqual, equal, ok } from 'assert';
 import { ScrapePartNumbersParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumbers';
@@ -219,8 +219,8 @@ describe("ScraperRepository", () => {
       // assert
       ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfo] completed with a [Failure]."));
       ok(mockLogger.error.calledOnceWith(err));
-      ok(mockLogger.warn.calledOnceWith(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE));
-      deepEqual(result, new Left(new ScraperFailure(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE, err)));
+      ok(mockLogger.warn.calledOnceWith(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE_MESSAGE));
+      deepEqual(result, new Left(new ScraperFailure(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE_MESSAGE, err)));
     });
 
     it("should return expected [VehicleInfo]", async () => {
@@ -245,6 +245,7 @@ describe("ScraperRepository", () => {
       mockLogger.warn.resetHistory();
       mockLogger.error.resetHistory();
       elementHandlesStub.resetHistory();
+      pageLocatorStub.resetHistory();
     });
 
     it("should call [Logger.info] correctly", async () => {
@@ -282,7 +283,7 @@ describe("ScraperRepository", () => {
       await repository.getPartNumbers(getPartNumbersParams);
 
       // assert
-      ok(pageLocatorStub.calledWith(Selectors.partNumberInp));
+      ok(pageLocatorStub.calledOnceWith(Selectors.partNumberInp));
       ok(elementHandlesStub.calledOnceWith());
     });
 
@@ -297,7 +298,7 @@ describe("ScraperRepository", () => {
       const result = await repository.getPartNumbers(getPartNumbersParams);
 
       // assert
-      ok(pageLocatorStub.calledWith(Selectors.partNumberInp));
+      ok(pageLocatorStub.calledOnceWith(Selectors.partNumberInp));
       ok(elementHandlesStub.calledOnceWith());
       ok(mockLogger.info.calledWith("[ScraperRepository.getPartNumbers] completed with a [Failure]."));
       ok(mockLogger.warn.calledWith(expectedFailure.message));
@@ -333,7 +334,7 @@ describe("ScraperRepository", () => {
       deepEqual(result, new Left(expectedFailure));
     });
 
-    it("should return [partNumbers<string[]>] if everything ran without an issue and dispose browser", async () => {
+    it("should return [partNumbers<string[]>] if everything ran without an issue", async () => {
       // arrange
       pageLocatorStub.returns(mockLocator);
 
@@ -372,6 +373,7 @@ describe("ScraperRepository", () => {
       mockLogger.warn.resetHistory();
       mockLogger.error.resetHistory();
       elementHandlesStub.resetHistory();
+      pageLocatorStub.resetHistory();
     });
 
     it("should call [Logger.info] correctly", async () => {
@@ -386,6 +388,131 @@ describe("ScraperRepository", () => {
       ok(mockLogger.info.calledWith("[ScraperRepository.getPartTextsParams] started."));
       ok(mockLogger.info.calledWith("[ScraperRepository.getPartTextsParams] completed."));
       equal(mockLogger.info.callCount, 2);
+    });
+
+    it("should call [page.locator] on [partRowTr]", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      elementHandlesStub.resolves([]);
+
+      // act
+      await repository.getPartTexts(getPartTextsParams);
+
+      // assert
+      ok(pageLocatorStub.calledOnceWith(Selectors.partRowTr));
+    });
+
+    it("should call [elementHandles] on [locator]", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      elementHandlesStub.resolves([]);
+
+      // act
+      await repository.getPartTexts(getPartTextsParams);
+
+      // assert
+      ok(elementHandlesStub.calledOnceWith());
+    });
+
+    it("should handle [Failure] if [elementHandles] rejects", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      const err = new Error("test-err");
+      elementHandlesStub.rejects(err);
+      const expectedFailure = new ScraperFailure(SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE, err);
+
+      // act
+      const result = await repository.getPartTexts(getPartTextsParams);
+
+      // assert
+      ok(elementHandlesStub.calledOnceWith());
+      ok(mockLogger.info.calledWith("[ScraperRepository.getPartTextsParams] completed with a [Failure]."));
+      ok(mockLogger.warn.calledOnceWith(SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE));
+      ok(mockLogger.error.calledOnceWith(err));
+      deepEqual(result, new Left(expectedFailure));
+    });
+
+    it("should handle [Failure] if [getAttribute] rejects", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      const err = new Error("test-err");
+
+      const node: HTMLElement = stubInterface<HTMLElement>();
+      const getAttributeStub = sinon.stub();
+      node.getAttribute = getAttributeStub;
+
+      elementHandlesStub.resolves([
+        node,
+        node,
+        node,
+      ]);
+
+      getAttributeStub.rejects(err);
+
+      const expectedFailure = new ScraperFailure(SCRAPER_GET_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE, err);
+
+      // act
+      const result = await repository.getPartTexts(getPartTextsParams);
+
+      // assert
+      ok(elementHandlesStub.calledOnceWith());
+      ok(mockLogger.info.calledWith("[ScraperRepository.getPartTextsParams] completed with a [Failure]."));
+      ok(mockLogger.warn.calledOnceWith(SCRAPER_GET_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE));
+      ok(mockLogger.error.calledOnceWith(err));
+      deepEqual(result, new Left(expectedFailure));
+    });
+
+    it("should call [getAttribute('data-parttext')] on each row", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+
+      const node: HTMLElement = stubInterface<HTMLElement>();
+      const getAttributeStub = sinon.stub();
+      node.getAttribute = getAttributeStub;
+
+      elementHandlesStub.resolves([
+        node,
+        node,
+        node,
+      ]);
+
+      getAttributeStub.resolves("");
+
+      // act
+      await repository.getPartTexts(getPartTextsParams);
+
+      // assert
+      ok(getAttributeStub.calledWith('data-parttext'));
+      equal(getAttributeStub.callCount, 3);
+    });
+
+    it("should return [partTexts<string[]>] if everything ran without an issue", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+
+      const node: HTMLElement = stubInterface<HTMLElement>();
+      const getAttributeStub = sinon.stub();
+      node.getAttribute = getAttributeStub;
+
+      elementHandlesStub.resolves([
+        node,
+        node,
+        node,
+        node,
+      ]);
+
+      getAttributeStub.onCall(0).resolves("text-1");
+      getAttributeStub.onCall(1).resolves("text-2");
+      getAttributeStub.onCall(2).resolves("text-3");
+      getAttributeStub.onCall(3).resolves("text-4");
+
+      const expectedResult = ["text-1", "text-2", "text-3", "text-4"];
+
+      // act
+      const result = await repository.getPartTexts(getPartTextsParams);
+
+      // assert
+      deepEqual(result, new Right(expectedResult));
     });
   });
 
