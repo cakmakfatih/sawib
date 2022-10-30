@@ -149,6 +149,10 @@ class ScraperRepositoryImpl implements ScraperRepository {
     return new Right(partTexts);
   }
 
+  getPartNumbersAndPartTexts(botController: BotControllerImpl): Promise<Either<Failure, { partText: string; partNumber: string; }[]>> {
+    throw new Error('Method not implemented.');
+  }
+
   private async getPartTextsFromPartRows(partRows: ElementHandle<Node>[]): Promise<string[]> {
     const partTexts = [];
 
