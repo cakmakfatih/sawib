@@ -393,6 +393,10 @@ class ScraperRepositoryImpl implements ScraperRepository {
     return new Right(true);
   }
 
+  scrapeVehicleInfoWithPartsData(url: string): Promise<Either<Failure, boolean>> {
+    throw new Error('Method not implemented.');
+  }
+
   async loginToPartsCheck(page: Page): Promise<Either<Failure, boolean>> {
     this.logger.info("[ScraperRepository.loginToPartsCheck] started.");
 

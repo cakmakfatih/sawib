@@ -11,6 +11,7 @@ interface ScraperRepository {
   getPartNumbersAndPartTexts(botController: BotController): Promise<Either<Failure, { partNumber: string; partText: string; }[]>>;
   getVehicleInfo(botController: BotController): Promise<Either<Failure, VehicleInfo>>;
   scrapePartNumbers(url: string): Promise<Either<Failure, boolean>>;
+  scrapeVehicleInfoWithPartsData(url: string): Promise<Either<Failure, boolean>>;
   loginToPartsCheck(params: LoginToPartsCheckParams): Promise<Either<Failure, boolean>>;
   savePartNumbersAsCsv(partNumbersArray: string[]): Either<Failure, boolean>;
   saveVehicleInfoWithPartsDataAsCsv({
