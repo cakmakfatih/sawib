@@ -505,7 +505,11 @@ class ScraperRepositoryImpl implements ScraperRepository {
   }
 
   saveVehicleInfoWithPartsDataAsCsv({ partNumbersAndTexts, vehicleInfo, }: { partNumbersAndTexts: {}[]; vehicleInfo: VehicleInfo; }): Either<Failure, boolean> {
-    throw new Error('Method not implemented.');
+    this.logger.info("[ScraperRepository.saveVehicleInfoWithPartsDataAsCsv] started.");
+
+    this.logger.info("[ScraperRepository.saveVehicleInfoWithPartsDataAsCsv] completed.");
+
+    return new Right(false);
   }
 
   setScraperConfig(config: ScraperConfig): Either<Failure, boolean> {

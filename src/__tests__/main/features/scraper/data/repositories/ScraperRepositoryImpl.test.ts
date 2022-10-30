@@ -18,6 +18,7 @@ import { GetVehicleInfoParams } from 'main/features/scraper/domain/usecases/GetV
 import VehicleInfo from 'main/features/scraper/domain/entities/VehicleInfo';
 import { GetPartTextsParams } from 'main/features/scraper/domain/usecases/GetPartTexts';
 import { GetPartNumbersAndPartTextsParams } from 'main/features/scraper/domain/usecases/GetPartNumbersAndPartTexts';
+import { SaveVehicleInfoWithPartsDataAsCsvParams } from 'main/features/scraper/domain/usecases/SaveVehicleInfoWithPartsDataAsCsv';
 
 const document = new jsdom.JSDOM().window.document;
 
@@ -1228,22 +1229,6 @@ describe("ScraperRepository", () => {
       };
     });
 
-    it("should call [Logger.info] correctly", () => {
-      // arrange
-      getScraperConfigStub.returns(new Right(scraperConfig));
-      const expectedFileName = `2018-12-24 07-12-00.csv`;
-      writeFileSyncStub.returns(null);
-
-      // act
-      repository.savePartNumbersAsCsv(partNumbersData);
-
-      // assert
-      ok(mockLogger.info.calledWith("[ScraperRepository.savePartNumbersAsCsv] started."));
-      ok(mockLogger.info.calledWith("[ScraperRepository.savePartNumbersAsCsv] completed."));
-      ok(mockLogger.info.calledWith(`[ScraperRepository.savePartNumbersAsCsv] saved CSV file to ${path.join(scraperConfig.savePath, expectedFileName)}.`));
-      equal(mockLogger.info.callCount, 3);
-    });
-
     beforeEach(() => {
       const fakeDate = new Date(Date.UTC(2018, 11, 24, 7, 12, 0, 0));
       clock = sinon.useFakeTimers(fakeDate);
@@ -1344,6 +1329,212 @@ describe("ScraperRepository", () => {
 
     afterAll(() => {
       writeFileSyncStub.restore();
+      getScraperConfigStub.restore();
+    });
+  });
+
+  describe("saveVehicleInfoWithPartsDataAsCsv", () => {
+    let clock: sinon.SinonFakeTimers;
+    let writeFileSyncStub: sinon.SinonStub;
+    let getScraperConfigStub: sinon.SinonStub;
+
+    let successfulCsvResult: string;
+    let vehicleInfoWithPartsData: SaveVehicleInfoWithPartsDataAsCsvParams;
+    let scraperConfig: ScraperConfig;
+
+    beforeAll(() => {
+      getScraperConfigStub = sinon.stub(repository, "getScraperConfig");
+      writeFileSyncStub = sinon.stub(fs, 'writeFileSync');
+
+      successfulCsvResult = fs.readFileSync(path.join(__dirname, "..", "..", "..", "..", "..", "static", "scrapeVehicleInfoWithPartsDataResult.csv"), "utf-8");
+      vehicleInfoWithPartsData = {
+        vehicleInfo: {
+          make: "Toyota",
+          model: "Tarago",
+          modelNr: "ACR50R",
+          series: "ACR50",
+          trans: "Automatic",
+          colour: "White (C.O.B)",
+          vin: "JTEGD52M10A025060",
+          body: "WAGON",
+          mthYr: "10/2010",
+          vehReg: "CPQ85R",
+          claimNr: "Not Submitted",
+        },
+        partNumbersAndTexts: [
+          {
+            partNumber: "",
+            partText: "Rear B/Bar Cover GLI",
+          },
+          {
+            partNumber: "",
+            partText: "Rear B/Bar Reflector R/H",
+          },
+          {
+            partNumber: "",
+            partText: "Rear B/Bar Reflector L/H",
+          },
+          {
+            partNumber: "",
+            partText: "Rear B/Bar Absorber L/H",
+          },
+          {
+            partNumber: "",
+            partText: "Rear B/Bar Absorber R/H",
+          },
+          {
+            partNumber: "",
+            partText: "Rear B/Bar Bracket Centre L/H",
+          },
+          {
+            partNumber: "",
+            partText: "Rear B/Bar Bracket Centre R/H",
+          },
+          {
+            partNumber: "",
+            partText: "Rear B/Bar Upper Corner Bracket L/H",
+          },
+          {
+            partNumber: "",
+            partText: "Rear B/Bar Upper Corner Bracket R/H",
+          },
+          {
+            partNumber: "",
+            partText: "Rear B/Bar Upper Side Bracket L/H",
+          },
+          {
+            partNumber: "",
+            partText: "Rear B/Bar Upper Side Bracket R/H",
+          },
+          {
+            partNumber: "",
+            partText: "Rear B/Bar Parking Sensor Inner",
+          },
+          {
+            partNumber: "",
+            partText: "Rear B/Bar Parking Sensor Inner Retainer",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Shell",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Emblem Toyota Symbol",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Badge Toyota",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Badge Tarago + GLI",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Garnish Upper Red",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Garnish Upper Clip",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Garnish",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Garnish Seal Strip",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Garnish Clip Outer",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Opening Switch",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Lock",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Lock Cover",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Striker",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Weatherstrip",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Glass Mould",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Glass Dam Upper",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Glass Channel Upper L/H",
+          },
+          {
+            partNumber: "",
+            partText: "Tailgate Glass Channel Upper R/H",
+          },
+          {
+            partNumber: "",
+            partText: "Beaver Panel Bumper Bracket L/H",
+          },
+          {
+            partNumber: "",
+            partText: "Beaver Panel Bumper Bracket R/H",
+          },
+        ],
+      };
+      scraperConfig = {
+        partsCheckCredentials: {
+          username: "test-username",
+          password: "test-password",
+        },
+        savePath: "test-path",
+      };
+    });
+
+    beforeEach(() => {
+      const fakeDate = new Date(Date.UTC(2018, 11, 24, 7, 12, 0, 0));
+      clock = sinon.useFakeTimers(fakeDate);
+
+      mockLogger.info.resetHistory();
+      getScraperConfigStub.resetHistory();
+      writeFileSyncStub.resetHistory();
+    });
+
+    afterEach(() => {
+      clock.restore();
+    });
+
+    it("should call [Logger.info] correctly", () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+      // act
+      repository.saveVehicleInfoWithPartsDataAsCsv(vehicleInfoWithPartsData);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.saveVehicleInfoWithPartsDataAsCsv] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.saveVehicleInfoWithPartsDataAsCsv] completed."));
+      equal(mockLogger.info.callCount, 2);
+    });
+
+    afterEach(() => {
+      clock.restore();
+    });
+
+    afterAll(() => {
       getScraperConfigStub.restore();
     });
   });

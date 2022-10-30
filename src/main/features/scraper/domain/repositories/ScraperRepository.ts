@@ -17,7 +17,10 @@ interface ScraperRepository {
     partNumbersAndTexts,
     vehicleInfo,
   }: {
-    partNumbersAndTexts: {}[];
+    partNumbersAndTexts: {
+      partNumber: string;
+      partText: string;
+    }[];
     vehicleInfo: VehicleInfo;
   }): Either<Failure, boolean>;
   setScraperConfig(config: ScraperConfig): Either<Failure, boolean>;

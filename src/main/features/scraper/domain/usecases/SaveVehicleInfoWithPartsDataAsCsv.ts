@@ -4,7 +4,10 @@ import ScraperRepository from "../repositories/ScraperRepository";
 import VehicleInfo from "../entities/VehicleInfo";
 
 type SaveVehicleInfoWithPartsDataAsCsvParams = {
-  partNumbersAndTexts: {}[];
+  partNumbersAndTexts: {
+    partNumber: string;
+    partText: string;
+  }[];
   vehicleInfo: VehicleInfo;
 };
 
