@@ -45,6 +45,7 @@ export enum Selectors {
   vehicleInfoContainer = "body > center > div:nth-child(2) > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr:nth-child(1) > td > div:nth-child(2) > div:nth-child(1) > div.quoteTitleContainer",
   vehicleInfoDivs = "div.quoteTitle,div.quoteTitleContent:not(:has(> input))",
   vehicleVinInfo = "div.quoteTitleContent > input",
+  partRowTr = "tr.lineRow",
 }
 
 @injectable()
@@ -107,6 +108,14 @@ class ScraperRepositoryImpl implements ScraperRepository {
     return new Right(partNumberValues);
   }
 
+  async getPartTexts(botController: BotControllerImpl): Promise<Either<Failure, string[]>> {
+    this.logger.info("[ScraperRepository.getPartTextsParams] started.");
+
+    this.logger.info("[ScraperRepository.getPartTextsParams] completed.");
+
+    return new Left(new Failure(""));
+  }
+
   async getVehicleInfo(botController: BotControllerImpl): Promise<Either<Failure, VehicleInfo>> {
     this.logger.info("[ScraperRepository.getVehicleInfo] started.");
 
@@ -158,17 +167,17 @@ class ScraperRepositoryImpl implements ScraperRepository {
     unformattedVehicleInfo["VIN"] = await vehicleVinValueInp?.getAttribute("value") ?? "";
 
     const formattedVehicleInfo: VehicleInfo = {
-      make: unformattedVehicleInfo["Make"],
-      model: unformattedVehicleInfo["Model"],
-      modelNr: unformattedVehicleInfo["Model Nr"],
-      series: unformattedVehicleInfo["Series"],
-      trans: unformattedVehicleInfo["Trans"],
-      colour: unformattedVehicleInfo["Colour"],
-      body: unformattedVehicleInfo["Body"],
-      mthYr: unformattedVehicleInfo["Mth/Yr"],
-      vehReg: unformattedVehicleInfo["Veh Reg"],
-      claimNr: unformattedVehicleInfo["Claim Nr"],
-      vin: unformattedVehicleInfo["VIN"],
+      make: unformattedVehicleInfo["Make"] || "NA",
+      model: unformattedVehicleInfo["Model"] || "NA",
+      modelNr: unformattedVehicleInfo["Model Nr"] || "NA",
+      series: unformattedVehicleInfo["Series"] || "NA",
+      trans: unformattedVehicleInfo["Trans"] || "NA",
+      colour: unformattedVehicleInfo["Colour"] || "NA",
+      body: unformattedVehicleInfo["Body"] || "NA",
+      mthYr: unformattedVehicleInfo["Mth/Yr"] || "NA",
+      vehReg: unformattedVehicleInfo["Veh Reg"] || "NA",
+      claimNr: unformattedVehicleInfo["Claim Nr"] || "NA",
+      vin: unformattedVehicleInfo["VIN"] || "NA",
     };
 
     return formattedVehicleInfo;

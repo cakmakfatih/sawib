@@ -7,6 +7,7 @@ import { LoginToPartsCheckParams } from '../usecases/LoginToPartsCheck';
 
 interface ScraperRepository {
   getPartNumbers(botController: BotController): Promise<Either<Failure, string[]>>;
+  getPartTexts(botController: BotController): Promise<Either<Failure, string[]>>;
   getVehicleInfo(botController: BotController): Promise<Either<Failure, VehicleInfo>>;
   scrapePartNumbers(url: string): Promise<Either<Failure, boolean>>;
   loginToPartsCheck(params: LoginToPartsCheckParams): Promise<Either<Failure, boolean>>;

@@ -16,6 +16,7 @@ import path from 'path';
 import { GetPartNumbersParams } from '../../../../../../main/features/scraper/domain/usecases/GetPartNumbers';
 import { GetVehicleInfoParams } from 'main/features/scraper/domain/usecases/GetVehicleInfo';
 import VehicleInfo from 'main/features/scraper/domain/entities/VehicleInfo';
+import { GetPartTextsParams } from 'main/features/scraper/domain/usecases/GetPartTexts';
 
 const document = new jsdom.JSDOM().window.document;
 
@@ -77,7 +78,7 @@ describe("ScraperRepository", () => {
         "Make", "Model", "Model Nr", "Series", "Trans", "Colour", "VIN", "Body", "Mth/Yr", "Veh Reg", "Claim Nr",
       ];
       const quoteContents: string[] = [
-        "Toyota", "Tarago", "ACR50R", "ACR50", "Automatic", "White (C.O.B)", "WAGON", "10/2010", "CPQ85R", "Not Submitted",
+        "Toyota", "Tarago", "ACR50R", "ACR50", "", "White (C.O.B)", "WAGON", "10/2010", "CPQ85R", "Not Submitted",
       ];
 
       for (let i = 0; i < quoteTitles.length; i++) {
@@ -121,13 +122,13 @@ describe("ScraperRepository", () => {
       elementHandleStub.resolves(vehicleVinInputEl);
     }
 
-    let getVehicleInfosParams: GetVehicleInfoParams = mockBotController;
+    let getVehicleInfoParams: GetVehicleInfoParams = mockBotController;
     let expectedVehicleInfo: VehicleInfo = {
       make: "Toyota",
       model: "Tarago",
       modelNr: "ACR50R",
       series: "ACR50",
-      trans: "Automatic",
+      trans: "NA",
       colour: "White (C.O.B)",
       vin: "JTEGD52M10A025060",
       body: "WAGON",
@@ -153,7 +154,7 @@ describe("ScraperRepository", () => {
       setElementHandleResults();
 
       // act
-      await repository.getVehicleInfo(getVehicleInfosParams);
+      await repository.getVehicleInfo(getVehicleInfoParams);
 
       // assert
       ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfo] started."));
@@ -168,7 +169,7 @@ describe("ScraperRepository", () => {
       setElementHandleResults();
 
       // act
-      await repository.getVehicleInfo(getVehicleInfosParams);
+      await repository.getVehicleInfo(getVehicleInfoParams);
 
       // assert
       ok(pageLocatorStub.calledOnceWith(Selectors.vehicleInfoContainer));
@@ -181,7 +182,7 @@ describe("ScraperRepository", () => {
       setElementHandleResults();
 
       // act
-      await repository.getVehicleInfo(getVehicleInfosParams);
+      await repository.getVehicleInfo(getVehicleInfoParams);
 
       // assert
       ok(pageLocatorStub.calledOnceWith(Selectors.vehicleInfoContainer));
@@ -197,7 +198,7 @@ describe("ScraperRepository", () => {
       setElementHandleResults();
 
       // act
-      await repository.getVehicleInfo(getVehicleInfosParams);
+      await repository.getVehicleInfo(getVehicleInfoParams);
 
       // assert
       ok(elementHandlesStub.calledOnceWith());
@@ -213,7 +214,7 @@ describe("ScraperRepository", () => {
       elementHandleStub.rejects(err);
 
       // act
-      const result = await repository.getVehicleInfo(getVehicleInfosParams);
+      const result = await repository.getVehicleInfo(getVehicleInfoParams);
 
       // assert
       ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfo] completed with a [Failure]."));
@@ -229,7 +230,7 @@ describe("ScraperRepository", () => {
       setElementHandleResults();
 
       // act
-      const result = await repository.getVehicleInfo(getVehicleInfosParams);
+      const result = await repository.getVehicleInfo(getVehicleInfoParams);
 
       // assert
       deepEqual(result, new Right(expectedVehicleInfo));
@@ -360,6 +361,31 @@ describe("ScraperRepository", () => {
 
       // assert
       deepEqual(result, new Right(expectedData));
+    });
+  });
+
+  describe("getPartTexts", () => {
+    let getPartTextsParams: GetPartTextsParams = mockBotController;
+
+    beforeEach(() => {
+      mockLogger.info.resetHistory();
+      mockLogger.warn.resetHistory();
+      mockLogger.error.resetHistory();
+      elementHandlesStub.resetHistory();
+    });
+
+    it("should call [Logger.info] correctly", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      elementHandlesStub.resolves([]);
+
+      // act
+      await repository.getPartTexts(getPartTextsParams);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.getPartTextsParams] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.getPartTextsParams] completed."));
+      equal(mockLogger.info.callCount, 2);
     });
   });
 
@@ -858,6 +884,22 @@ describe("ScraperRepository", () => {
         },
         savePath: "test-path",
       };
+    });
+
+    it("should call [Logger.info] correctly", () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+      const expectedFileName = `2018-12-24 07-12-00.csv`;
+      writeFileSyncStub.returns(null);
+
+      // act
+      repository.savePartNumbersAsCsv(partNumbersData);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.savePartNumbersAsCsv] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.savePartNumbersAsCsv] completed."));
+      ok(mockLogger.info.calledWith(`[ScraperRepository.savePartNumbersAsCsv] saved CSV file to ${path.join(scraperConfig.savePath, expectedFileName)}.`));
+      equal(mockLogger.info.callCount, 3);
     });
 
     beforeEach(() => {

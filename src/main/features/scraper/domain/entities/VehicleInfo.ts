@@ -1,6 +1,4 @@
 interface VehicleInfo {
-  partText?: string;
-  partNumber?: string;
   make: string;
   model: string;
   modelNr: string;
