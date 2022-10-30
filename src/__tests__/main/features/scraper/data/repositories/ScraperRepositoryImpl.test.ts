@@ -1,6 +1,6 @@
 import Logger from '../../../../../../main/core/Logger';
 import sinon, { stubInterface } from 'ts-sinon';
-import ScraperRepositoryImpl, { FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, SCRAPER_GET_PART_NUMBERS_AND_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE, SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE, SCRAPER_GET_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE, SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE_MESSAGE, SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, SCRAPER_PAGE_FILL_FAILURE_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
+import ScraperRepositoryImpl, { FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, FS_WRITE_FILE_SYNC_VEHICLE_INFO_WITH_PART_NUMBERS_FAILURE_MESSAGE, PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, SCRAPER_GET_PART_NUMBERS_AND_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE, SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE, SCRAPER_GET_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE, SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE_MESSAGE, SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, SCRAPER_PAGE_FILL_FAILURE_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
 import ScraperLocalDataSource from '../../../../../../main/features/scraper/data/datasources/ScraperLocalDataSource';
 import { deepEqual, equal, ok } from 'assert';
 import { ScrapePartNumbersParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumbers';
@@ -1238,14 +1238,10 @@ describe("ScraperRepository", () => {
       writeFileSyncStub.resetHistory();
     });
 
-    afterEach(() => {
-      clock.restore();
-    });
-
     it("should call [Logger.info] correctly", () => {
       // arrange
       getScraperConfigStub.returns(new Right(scraperConfig));
-      const expectedFileName = `2018-12-24 07-12-00.csv`;
+      const expectedFileName = `2018-12-24 07-12-00--part_numbers.csv`;
       writeFileSyncStub.returns(null);
 
       // act
@@ -1325,6 +1321,10 @@ describe("ScraperRepository", () => {
 
       // assert
       deepEqual(result, new Right(true));
+    });
+
+    afterEach(() => {
+      clock.restore();
     });
 
     afterAll(() => {
@@ -1514,10 +1514,6 @@ describe("ScraperRepository", () => {
       writeFileSyncStub.resetHistory();
     });
 
-    afterEach(() => {
-      clock.restore();
-    });
-
     it("should call [Logger.info] correctly", () => {
       // arrange
       getScraperConfigStub.returns(new Right(scraperConfig));
@@ -1528,6 +1524,74 @@ describe("ScraperRepository", () => {
       ok(mockLogger.info.calledWith("[ScraperRepository.saveVehicleInfoWithPartsDataAsCsv] started."));
       ok(mockLogger.info.calledWith("[ScraperRepository.saveVehicleInfoWithPartsDataAsCsv] completed."));
       equal(mockLogger.info.callCount, 2);
+    });
+
+    it("should call [getScraperConfig] to get file save path for part numbers", () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+
+      // act
+      repository.saveVehicleInfoWithPartsDataAsCsv(vehicleInfoWithPartsData);
+
+      // assert
+      ok(getScraperConfigStub.calledOnceWith());
+    });
+
+    it("should return [Failure] if [getScraperConfig] returns a Failure", () => {
+      // arrange
+      const err = new Error("test-err");
+      const expectedFailure = new ScraperFailure("test-failure", err);
+      getScraperConfigStub.returns(new Left(expectedFailure));
+
+      // act
+      const result = repository.saveVehicleInfoWithPartsDataAsCsv(vehicleInfoWithPartsData);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.saveVehicleInfoWithPartsDataAsCsv] completed with a [Failure]."));
+      deepEqual(result, new Left(expectedFailure));
+    });
+
+    it("should call [writeFileSync] with correct params", () => {
+      // arrange
+      const expectedFileName = `2018-12-24 07-12-00--vehicle_info_with_parts_data.csv`;
+      getScraperConfigStub.returns(new Right(scraperConfig));
+      writeFileSyncStub.returns(null);
+
+      // act
+      repository.saveVehicleInfoWithPartsDataAsCsv(vehicleInfoWithPartsData);
+
+      // assert
+      writeFileSyncStub.calledOnceWith(path.join(scraperConfig.savePath, expectedFileName), successfulCsvResult, { encoding: "utf-8" });
+    });
+
+    it("should return [Failure] and log correctly if [writeFileSync] fails", () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+
+      const err = new Error("test-err");
+      writeFileSyncStub.throws(err);
+      const expectedFailure = new ScraperFailure(FS_WRITE_FILE_SYNC_VEHICLE_INFO_WITH_PART_NUMBERS_FAILURE_MESSAGE, err);
+
+      // act
+      const result = repository.saveVehicleInfoWithPartsDataAsCsv(vehicleInfoWithPartsData);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.saveVehicleInfoWithPartsDataAsCsv] completed with a [Failure]."));
+      ok(mockLogger.warn.calledWith(FS_WRITE_FILE_SYNC_VEHICLE_INFO_WITH_PART_NUMBERS_FAILURE_MESSAGE));
+      ok(mockLogger.error.calledWith(err));
+      deepEqual(result, new Left(expectedFailure));
+    });
+
+    it("should return [Right<true>] if everything ran correctly", async () => {
+      // arrange
+      getScraperConfigStub.returns(new Right(scraperConfig));
+      writeFileSyncStub.returns(null);
+
+      // act
+      const result = repository.saveVehicleInfoWithPartsDataAsCsv(vehicleInfoWithPartsData);
+
+      // assert
+      deepEqual(result, new Right(true));
     });
 
     afterEach(() => {

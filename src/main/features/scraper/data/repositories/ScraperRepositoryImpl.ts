@@ -15,6 +15,7 @@ import safeCall from '../../../../utils/safeCall';
 import { ILaunchBotController } from '../../../../features/bot/domain/usecases/LaunchBotController';
 import BotControllerImpl from '../../../../features/bot/presentation/controllers/BotController';
 import VehicleInfo from '../../domain/entities/VehicleInfo';
+import { SaveVehicleInfoWithPartsDataAsCsvParams } from '../../domain/usecases/SaveVehicleInfoWithPartsDataAsCsv';
 
 
 export const SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE = "Failed while running [launchBotController] from [ScraperRepository].";
@@ -28,6 +29,7 @@ export const SCRAPER_PAGE_CLICK_FAILURE_MESSAGE = "Failed while running [<page>.
 export const SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE = "Failed while running [<locator>.waitFor].";
 
 export const FS_WRITE_FILE_SYNC_FAILURE_MESSAGE = "Failed while running [<fs>.writeFileSync] on [ScraperRepository.savePartNumbersAsCsv].";
+export const FS_WRITE_FILE_SYNC_VEHICLE_INFO_WITH_PART_NUMBERS_FAILURE_MESSAGE = "Failed while running [<fs>.writeFileSync] on [ScraperRepository.saveVehicleInfoWithPartsDataAsCsv].";
 
 export const SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE = "Failed while running [<localDataSource>.setScraperConfig].";
 export const SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE = "Failed while running [<localDataSource>.getScraperConfig].";
@@ -481,7 +483,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
     const scraperConfig = scraperConfigOrFailure.value;
 
-    const fileName = `${moment().utc().format("YYYY-MM-DD HH-MM-SS").toString()}.csv`;
+    const fileName = `${moment().utc().format("YYYY-MM-DD HH-MM-SS").toString()}--part_numbers.csv`;
     const pathToSave = path.join(scraperConfig.savePath, fileName);
 
     partNumbers = partNumbers.map((i) => `"${i.replace(/-| /g, "")}"`);
@@ -504,12 +506,59 @@ class ScraperRepositoryImpl implements ScraperRepository {
     return new Right(true);
   }
 
-  saveVehicleInfoWithPartsDataAsCsv({ partNumbersAndTexts, vehicleInfo, }: { partNumbersAndTexts: {}[]; vehicleInfo: VehicleInfo; }): Either<Failure, boolean> {
+  saveVehicleInfoWithPartsDataAsCsv({ partNumbersAndTexts, vehicleInfo }: SaveVehicleInfoWithPartsDataAsCsvParams): Either<Failure, boolean> {
     this.logger.info("[ScraperRepository.saveVehicleInfoWithPartsDataAsCsv] started.");
+
+    const scraperConfigOrFailure = this.getScraperConfig();
+
+    if (scraperConfigOrFailure.isLeft()) {
+      const scraperConfigFailure = scraperConfigOrFailure.value;
+
+      this.logger.info("[ScraperRepository.saveVehicleInfoWithPartsDataAsCsv] completed with a [Failure].");
+
+      return new Left(scraperConfigFailure);
+    }
+
+    const scraperConfig = scraperConfigOrFailure.value;
+
+    const fileName = `${moment().utc().format("YYYY-MM-DD HH-MM-SS").toString()}--vehicle_info_with_parts_data.csv`;
+    const pathToSave = path.join(scraperConfig.savePath, fileName);
+
+    const csvData = this.parseVehicleInfoWithPartsDataToCsv({ partNumbersAndTexts, vehicleInfo });
+
+    const fileSavedOrFailed = safeCall(() => fs.writeFileSync(pathToSave, csvData, { encoding: "utf-8" }));
+
+    if (fileSavedOrFailed.isLeft()) {
+      const fsWriteFileSyncErr = fileSavedOrFailed.value;
+
+      this.logger.info("[ScraperRepository.saveVehicleInfoWithPartsDataAsCsv] completed with a [Failure].");
+      this.logger.warn(FS_WRITE_FILE_SYNC_VEHICLE_INFO_WITH_PART_NUMBERS_FAILURE_MESSAGE);
+      this.logger.error(fsWriteFileSyncErr);
+
+      return new Left(new ScraperFailure(FS_WRITE_FILE_SYNC_VEHICLE_INFO_WITH_PART_NUMBERS_FAILURE_MESSAGE, fsWriteFileSyncErr));
+    }
 
     this.logger.info("[ScraperRepository.saveVehicleInfoWithPartsDataAsCsv] completed.");
 
-    return new Right(false);
+    return new Right(true);
+  }
+
+  private parseVehicleInfoWithPartsDataToCsv({ partNumbersAndTexts, vehicleInfo }: SaveVehicleInfoWithPartsDataAsCsvParams): string {
+    let csv = "";
+
+    const header = `"Row","PartText","PartNumber","Make","Model","Model Nr","Series","Trans","Colour","VIN","Body","Mth/Yr","Veh Reg","Claim Nr"`;
+
+    csv += `${header}\n`;
+
+    const { make, model, modelNr, series, trans, colour, vin, body, mthYr, vehReg, claimNr } = vehicleInfo;
+
+    for (let row = 0; row < partNumbersAndTexts.length; row++) {
+      const { partText, partNumber } = partNumbersAndTexts[row];
+
+      csv += `"${row}","${partText}","${partNumber}","${make}","${model}","${modelNr}","${series}","${trans}","${colour}","${vin}","${body}","${mthYr}","${vehReg}","${claimNr}"\n`;
+    }
+
+    return csv;
   }
 
   setScraperConfig(config: ScraperConfig): Either<Failure, boolean> {
