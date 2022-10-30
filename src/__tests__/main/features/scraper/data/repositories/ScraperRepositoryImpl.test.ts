@@ -14,7 +14,7 @@ import ScraperConfig from '../../../../../../main/features/scraper/domain/entiti
 import fs from 'fs';
 import path from 'path';
 import { GetPartNumbersParams } from '../../../../../../main/features/scraper/domain/usecases/GetPartNumbers';
-import { GetVehicleInfosParams } from 'main/features/scraper/domain/usecases/GetVehicleInfos';
+import { GetVehicleInfoParams } from 'main/features/scraper/domain/usecases/GetVehicleInfo';
 
 const document = new jsdom.JSDOM().window.document;
 
@@ -65,7 +65,7 @@ const repository = new ScraperRepositoryImpl(
 );
 
 describe("ScraperRepository", () => {
-  describe("getVehicleInfos", () => {
+  describe("getVehicleInfo", () => {
     function setElementHandleResults() {
       const quoteTitleAndContainersResult: Node[] = [];
 
@@ -115,7 +115,7 @@ describe("ScraperRepository", () => {
       elementHandleStub.resolves(vehicleVinValueContainer);
     }
 
-    let getVehicleInfosParams: GetVehicleInfosParams = mockBotController;
+    let getVehicleInfosParams: GetVehicleInfoParams = mockBotController;
 
     beforeEach(() => {
       mockLogger.info.resetHistory();
@@ -134,11 +134,11 @@ describe("ScraperRepository", () => {
       setElementHandleResults();
 
       // act
-      await repository.getVehicleInfos(getVehicleInfosParams);
+      await repository.getVehicleInfo(getVehicleInfosParams);
 
       // assert
-      ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfos] started."));
-      ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfos] completed."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfo] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfo] completed."));
       equal(mockLogger.info.callCount, 2);
     });
 
@@ -149,7 +149,7 @@ describe("ScraperRepository", () => {
       setElementHandleResults();
 
       // act
-      await repository.getVehicleInfos(getVehicleInfosParams);
+      await repository.getVehicleInfo(getVehicleInfosParams);
 
       // assert
       ok(pageLocatorStub.calledOnceWith(Selectors.vehicleInfosContainer));
@@ -162,7 +162,7 @@ describe("ScraperRepository", () => {
       setElementHandleResults();
 
       // act
-      await repository.getVehicleInfos(getVehicleInfosParams);
+      await repository.getVehicleInfo(getVehicleInfosParams);
 
       // assert
       ok(pageLocatorStub.calledOnceWith(Selectors.vehicleInfosContainer));
@@ -178,7 +178,7 @@ describe("ScraperRepository", () => {
       setElementHandleResults();
 
       // act
-      await repository.getVehicleInfos(getVehicleInfosParams);
+      await repository.getVehicleInfo(getVehicleInfosParams);
 
       // assert
       ok(elementHandlesStub.calledOnceWith());

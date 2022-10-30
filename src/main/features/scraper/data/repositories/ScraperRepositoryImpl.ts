@@ -32,6 +32,8 @@ export const FS_WRITE_FILE_SYNC_FAILURE_MESSAGE = "Failed while running [<fs>.wr
 export const SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE = "Failed while running [<localDataSource>.setScraperConfig].";
 export const SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE = "Failed while running [<localDataSource>.getScraperConfig].";
 
+export const SCRAPER_GET_VEHICLE_INFO_FAILURE = "Failed while running []";
+
 export const PARTS_CHECK_LOGIN_URL = "https://partscheck.com.au/global/login.php";
 
 export enum Selectors {
@@ -105,25 +107,25 @@ class ScraperRepositoryImpl implements ScraperRepository {
     return new Right(partNumberValues);
   }
 
-  async getVehicleInfos(botController: BotControllerImpl): Promise<Either<Failure, VehicleInfo[]>> {
-    this.logger.info("[ScraperRepository.getVehicleInfos] started.");
+  async getVehicleInfo(botController: BotControllerImpl): Promise<Either<Failure, VehicleInfo>> {
+    this.logger.info("[ScraperRepository.getVehicleInfo] started.");
 
     const page = botController.pages[0];
 
-    await this.readVehicleData(page);
+    await this.getVehicleInfosFromPage(page);
 
-    this.logger.info("[ScraperRepository.getVehicleInfos] completed.");
+    this.logger.info("[ScraperRepository.getVehicleInfo] completed.");
 
     return new Left(new Failure(""));
   }
 
-  private async readVehicleData(page: Page): Promise<string[]> {
+  private async getVehicleInfosFromPage(page: Page): Promise<string[]> {
     const vehicleInfosContainerLocator = page.locator(Selectors.vehicleInfosContainer);
     const vehicleInfosLocator = vehicleInfosContainerLocator.locator(Selectors.vehicleInfo);
     const vehicleVinInfoLocator = vehicleInfosContainerLocator.locator(Selectors.vehicleVinInfo);
 
-    await vehicleVinInfoLocator.elementHandle();
     await vehicleInfosLocator.elementHandles();
+    await vehicleVinInfoLocator.elementHandle();
 
     return [];
   }

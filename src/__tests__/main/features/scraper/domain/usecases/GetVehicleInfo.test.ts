@@ -1,7 +1,7 @@
 import { stubInterface } from 'ts-sinon';
 import { equal, ok } from 'assert';
 import { Either, Right } from '@typed-f/either';
-import { IGetVehicleInfos, GetVehicleInfos, GetVehicleInfosParams } from '../../../../../../main/features/scraper/domain/usecases/GetVehicleInfos';
+import { IGetVehicleInfo, GetVehicleInfo, GetVehicleInfoParams } from '../../../../../../main/features/scraper/domain/usecases/GetVehicleInfo';
 import { Failure } from '../../../../../../main/core/error/failures';
 import BotController from '../../../../../../main/features/bot/presentation/controllers/BotController';
 import ScraperRepository from '../../../../../../main/features/scraper/domain/repositories/ScraperRepository';
@@ -10,26 +10,26 @@ import VehicleInfo from '../../../../../../main/features/scraper/domain/entities
 const mockRepository = stubInterface<ScraperRepository>();
 
 const mockBotController: BotController = stubInterface<BotController>();
-const usecase: IGetVehicleInfos = (params: GetVehicleInfosParams) => GetVehicleInfos(mockRepository, params);
+const usecase: IGetVehicleInfo = (params: GetVehicleInfoParams) => GetVehicleInfo(mockRepository, params);
 
-describe("GetVehicleInfos", () => {
-  it("should call [ScraperRepository.getVehicleInfos] once with correct params", async () => {
+describe("GetVehicleInfo", () => {
+  it("should call [ScraperRepository.getVehicleInfo] once with correct params", async () => {
     // arrange
-    const params: GetVehicleInfosParams = mockBotController;
+    const params: GetVehicleInfoParams = mockBotController;
 
     // act
     await usecase(params);
 
     // assert
-    ok(mockRepository.getVehicleInfos.calledOnceWith(params));
+    ok(mockRepository.getVehicleInfo.calledOnceWith(params));
   });
 
-  it("should return the value retrieved from [ScraperRepository.getVehicleInfos]", async () => {
+  it("should return the value retrieved from [ScraperRepository.getVehicleInfo]", async () => {
     // arrange
-    const params: GetVehicleInfosParams = mockBotController;
+    const params: GetVehicleInfoParams = mockBotController;
 
-    const repositoryResult: Either<Failure, VehicleInfo[]> = new Right([]);
-    mockRepository.getVehicleInfos.resolves(repositoryResult);
+    const repositoryResult: Either<Failure, VehicleInfo> = new Right(stubInterface<VehicleInfo>());
+    mockRepository.getVehicleInfo.resolves(repositoryResult);
 
     // act
     const result = await usecase(params);
