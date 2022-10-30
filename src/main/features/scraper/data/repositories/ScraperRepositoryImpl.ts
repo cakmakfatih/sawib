@@ -32,7 +32,7 @@ export const FS_WRITE_FILE_SYNC_FAILURE_MESSAGE = "Failed while running [<fs>.wr
 export const SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE = "Failed while running [<localDataSource>.setScraperConfig].";
 export const SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE = "Failed while running [<localDataSource>.getScraperConfig].";
 
-export const SCRAPER_GET_VEHICLE_INFO_FAILURE = "Failed while running []";
+export const SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE = "Failed while running [ScraperRepository.getVehicleInfoData].";
 
 export const PARTS_CHECK_LOGIN_URL = "https://partscheck.com.au/global/login.php";
 
@@ -42,8 +42,8 @@ export enum Selectors {
   loginPasswordInp = "#mypass",
   loginBtn = "#loginButton",
   isLoggedIn = "#Xtop-header > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(4) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2) > a:nth-child(1)",
-  vehicleInfosContainer = "body > center > div:nth-child(2) > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr:nth-child(1) > td > div:nth-child(2) > div:nth-child(1) > div.quoteTitleContainer",
-  vehicleInfo = "div.quoteTitle,div.quoteTitleContent:not(:has(> input))",
+  vehicleInfoContainer = "body > center > div:nth-child(2) > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr:nth-child(1) > td > div:nth-child(2) > div:nth-child(1) > div.quoteTitleContainer",
+  vehicleInfoDivs = "div.quoteTitle,div.quoteTitleContent:not(:has(> input))",
   vehicleVinInfo = "div.quoteTitleContent > input",
 }
 
@@ -112,22 +112,33 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
     const page = botController.pages[0];
 
-    await this.getVehicleInfosFromPage(page);
+    const vehicleInfoDataOrError = await safePromise<VehicleInfo | null>(() => this.handleVehicleInfoScraping(page));
+
+    if (vehicleInfoDataOrError.isLeft()) {
+      const vehicleInfoErr = vehicleInfoDataOrError.value;
+
+      this.logger.warn(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE);
+      this.logger.error(vehicleInfoErr);
+      this.logger.info("[ScraperRepository.getVehicleInfo] completed with a [Failure].");
+
+      return new Left(new ScraperFailure(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE, vehicleInfoErr));
+    }
 
     this.logger.info("[ScraperRepository.getVehicleInfo] completed.");
 
     return new Left(new Failure(""));
   }
 
-  private async getVehicleInfosFromPage(page: Page): Promise<string[]> {
-    const vehicleInfosContainerLocator = page.locator(Selectors.vehicleInfosContainer);
-    const vehicleInfosLocator = vehicleInfosContainerLocator.locator(Selectors.vehicleInfo);
-    const vehicleVinInfoLocator = vehicleInfosContainerLocator.locator(Selectors.vehicleVinInfo);
+  private async handleVehicleInfoScraping(page: Page): Promise<VehicleInfo> {
+    const vehicleInfoContainerLocator = page.locator(Selectors.vehicleInfoContainer);
+    const vehicleInfoLocator = vehicleInfoContainerLocator.locator(Selectors.vehicleInfoDivs);
+    const vehicleVinInfoLocator = vehicleInfoContainerLocator.locator(Selectors.vehicleVinInfo);
 
-    await vehicleInfosLocator.elementHandles();
+    await vehicleInfoLocator.elementHandles();
     await vehicleVinInfoLocator.elementHandle();
 
-    return [];
+    //! TO DO: RETURN [VehicleInfo]
+    return null!;
   }
 
   async scrapePartNumbers(url: string): Promise<Either<Failure, boolean>> {

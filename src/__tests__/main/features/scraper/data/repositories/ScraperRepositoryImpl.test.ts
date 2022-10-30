@@ -1,6 +1,6 @@
 import Logger from '../../../../../../main/core/Logger';
 import sinon, { stubInterface } from 'ts-sinon';
-import ScraperRepositoryImpl, { FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, SCRAPER_PAGE_FILL_FAILURE_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
+import ScraperRepositoryImpl, { FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE, SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, SCRAPER_PAGE_FILL_FAILURE_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
 import ScraperLocalDataSource from '../../../../../../main/features/scraper/data/datasources/ScraperLocalDataSource';
 import { deepEqual, equal, ok } from 'assert';
 import { ScrapePartNumbersParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumbers';
@@ -152,7 +152,7 @@ describe("ScraperRepository", () => {
       await repository.getVehicleInfo(getVehicleInfosParams);
 
       // assert
-      ok(pageLocatorStub.calledOnceWith(Selectors.vehicleInfosContainer));
+      ok(pageLocatorStub.calledOnceWith(Selectors.vehicleInfoContainer));
     });
 
     it("should call [page.locator] on [vehicleInfosContainerLocator] with [vehicleInfo] & [vehicleVinInfo] to get each individual part", async () => {
@@ -165,8 +165,8 @@ describe("ScraperRepository", () => {
       await repository.getVehicleInfo(getVehicleInfosParams);
 
       // assert
-      ok(pageLocatorStub.calledOnceWith(Selectors.vehicleInfosContainer));
-      ok(locatorLocatorStub.calledWith(Selectors.vehicleInfo));
+      ok(pageLocatorStub.calledOnceWith(Selectors.vehicleInfoContainer));
+      ok(locatorLocatorStub.calledWith(Selectors.vehicleInfoDivs));
       ok(locatorLocatorStub.calledWith(Selectors.vehicleVinInfo));
       equal(locatorLocatorStub.callCount, 2);
     });
@@ -183,6 +183,24 @@ describe("ScraperRepository", () => {
       // assert
       ok(elementHandlesStub.calledOnceWith());
       ok(elementHandleStub.calledOnceWith());
+    });
+
+    it("should return a [Failure] if element(s) fail to resolve", async () => {
+      // arrange
+      setElementHandleResults();
+      pageLocatorStub.returns(mockLocator);
+      locatorLocatorStub.returns(mockLocator);
+      const err = new Error("test-err");
+      elementHandleStub.rejects(err);
+
+      // act
+      const result = await repository.getVehicleInfo(getVehicleInfosParams);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.getVehicleInfo] completed with a [Failure]."));;
+      ok(mockLogger.error.calledOnceWith(err));
+      ok(mockLogger.warn.calledOnceWith(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE));
+      deepEqual(result, new Left(new ScraperFailure(SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE, err)));
     });
   });
 
