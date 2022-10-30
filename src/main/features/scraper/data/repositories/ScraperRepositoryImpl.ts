@@ -34,13 +34,14 @@ export const SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE = "Fai
 
 export const SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE = "Failed while running [ScraperRepository.getPartRows].";
 export const SCRAPER_GET_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE = "Failed while running [ScraperRepository.getPartTextsFromPartRows].";
+export const SCRAPER_GET_PART_NUMBERS_AND_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE = "Failed while running [ScraperRepository.getPartNumbersAndPartTextsFromPartRows].";
 
 export const SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE_MESSAGE = "Failed while running [ScraperRepository.getVehicleInfoData].";
 
 export const PARTS_CHECK_LOGIN_URL = "https://partscheck.com.au/global/login.php";
 
 export enum Selectors {
-  partNumberInp = ".partNr",
+  partNumberInp = "input.partNr",
   loginUsernameInp = "#myuser",
   loginPasswordInp = "#mypass",
   loginBtn = "#loginButton",
@@ -149,8 +150,74 @@ class ScraperRepositoryImpl implements ScraperRepository {
     return new Right(partTexts);
   }
 
-  getPartNumbersAndPartTexts(botController: BotControllerImpl): Promise<Either<Failure, { partText: string; partNumber: string; }[]>> {
-    throw new Error('Method not implemented.');
+  async getPartNumbersAndPartTexts(botController: BotControllerImpl): Promise<Either<Failure, { partText: string; partNumber: string; }[]>> {
+    this.logger.info("[ScraperRepository.getPartNumbersAndPartTexts] started.");
+
+    const page = botController.pages[0];
+
+    const partRowsOrError = await safePromise<ElementHandle<Node>[]>(() => this.getPartRows(page));
+
+    if (partRowsOrError.isLeft()) {
+      const partRowsErr = partRowsOrError.value;
+
+      this.logger.error(partRowsErr);
+      this.logger.warn(SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE);
+      this.logger.info("[ScraperRepository.getPartNumbersAndPartTexts] completed with a [Failure].");
+
+      return new Left(new ScraperFailure(SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE, partRowsErr));
+    }
+
+    const partRows = partRowsOrError.value;
+
+    const partNumbersAndTextsOrError = await safePromise(() => this.getPartNumbersAndPartTextsFromPartRows(partRows));
+
+    if (partNumbersAndTextsOrError.isLeft()) {
+      const partNumbersAndTextsErr = partNumbersAndTextsOrError.value;
+
+      this.logger.error(partNumbersAndTextsErr);
+      this.logger.warn(SCRAPER_GET_PART_NUMBERS_AND_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE);
+      this.logger.info("[ScraperRepository.getPartNumbersAndPartTexts] completed with a [Failure].");
+
+      return new Left(new ScraperFailure(SCRAPER_GET_PART_NUMBERS_AND_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE, partNumbersAndTextsErr));
+    }
+
+    const partTextsAndNumbers = partNumbersAndTextsOrError.value;
+
+    this.logger.info("[ScraperRepository.getPartNumbersAndPartTexts] completed.");
+
+    return new Right(partTextsAndNumbers);
+  }
+
+  private async getPartNumbersAndPartTextsFromPartRows(partRows: ElementHandle<Node>[]): Promise<{
+    partNumber: string;
+    partText: string;
+  }[]> {
+    const partNumbersAndPartTexts: {
+      partNumber: string;
+      partText: string;
+    }[] = [];
+
+    for (let partRow of partRows) {
+      partNumbersAndPartTexts.push(await this.getPartNumberAndPartTextFromPartRow(partRow));
+    }
+
+    return partNumbersAndPartTexts;
+  }
+
+  private async getPartNumberAndPartTextFromPartRow(partRow: ElementHandle<Node>): Promise<{
+    partNumber: string;
+    partText: string;
+  }> {
+    return {
+      partNumber: await this.getPartNumberFromPartRow(partRow),
+      partText: await this.getPartTextFromPartRow(partRow),
+    }
+  }
+
+  private async getPartNumberFromPartRow(partRow: ElementHandle<Node>): Promise<string> {
+    const inputElement = await partRow.$(Selectors.partNumberInp);
+
+    return await inputElement?.getAttribute("value") ?? "";
   }
 
   private async getPartTextsFromPartRows(partRows: ElementHandle<Node>[]): Promise<string[]> {

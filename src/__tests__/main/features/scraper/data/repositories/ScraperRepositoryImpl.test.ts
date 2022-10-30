@@ -1,6 +1,6 @@
 import Logger from '../../../../../../main/core/Logger';
 import sinon, { stubInterface } from 'ts-sinon';
-import ScraperRepositoryImpl, { FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE, SCRAPER_GET_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE, SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE_MESSAGE, SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, SCRAPER_PAGE_FILL_FAILURE_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
+import ScraperRepositoryImpl, { FS_WRITE_FILE_SYNC_FAILURE_MESSAGE, PARTS_CHECK_LOGIN_URL, SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE, SCRAPER_ELEMENT_HANDLES_FAILURE_MESSAGE, SCRAPER_GET_ATTRIBUTE_FAILURE_MESSAGE, SCRAPER_GET_PART_NUMBERS_AND_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE, SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE, SCRAPER_GET_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE, SCRAPER_GET_VEHICLE_INFO_DATA_FAILURE_MESSAGE, SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_GET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_LOCAL_DATA_SOURCE_SET_SCRAPER_CONFIG_FAILURE_MESSAGE, SCRAPER_PAGE_CLICK_FAILURE_MESSAGE, SCRAPER_PAGE_FILL_FAILURE_MESSAGE, SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, SCRAPER_PAGE_WAIT_FOR_FAILURE_MESSAGE, Selectors } from '../../../../../../main/features/scraper/data/repositories/ScraperRepositoryImpl';
 import ScraperLocalDataSource from '../../../../../../main/features/scraper/data/datasources/ScraperLocalDataSource';
 import { deepEqual, equal, ok } from 'assert';
 import { ScrapePartNumbersParams } from '../../../../../../main/features/scraper/domain/usecases/ScrapePartNumbers';
@@ -17,6 +17,7 @@ import { GetPartNumbersParams } from '../../../../../../main/features/scraper/do
 import { GetVehicleInfoParams } from 'main/features/scraper/domain/usecases/GetVehicleInfo';
 import VehicleInfo from 'main/features/scraper/domain/entities/VehicleInfo';
 import { GetPartTextsParams } from 'main/features/scraper/domain/usecases/GetPartTexts';
+import { GetPartNumbersAndPartTextsParams } from 'main/features/scraper/domain/usecases/GetPartNumbersAndPartTexts';
 
 const document = new jsdom.JSDOM().window.document;
 
@@ -510,6 +511,220 @@ describe("ScraperRepository", () => {
 
       // act
       const result = await repository.getPartTexts(getPartTextsParams);
+
+      // assert
+      deepEqual(result, new Right(expectedResult));
+    });
+  });
+
+  describe("getPartNumbersAndPartTexts", () => {
+    let getPartNumbersAndPartTextsParams: GetPartNumbersAndPartTextsParams = mockBotController;
+
+    beforeEach(() => {
+      mockLogger.info.resetHistory();
+      mockLogger.warn.resetHistory();
+      mockLogger.error.resetHistory();
+      elementHandlesStub.resetHistory();
+      pageLocatorStub.resetHistory();
+    });
+
+    it("should call [Logger.info] correctly", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+
+      // act
+      await repository.getPartNumbersAndPartTexts(getPartNumbersAndPartTextsParams);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.getPartNumbersAndPartTexts] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.getPartNumbersAndPartTexts] completed."));
+      equal(mockLogger.info.callCount, 2);
+    });
+
+    it("should call [page.locator] on [partRowTr]", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      elementHandlesStub.resolves([]);
+
+      // act
+      await repository.getPartNumbersAndPartTexts(getPartNumbersAndPartTextsParams);
+
+      // assert
+      ok(pageLocatorStub.calledOnceWith(Selectors.partRowTr));
+    });
+
+    it("should call [elementHandles] on [locator]", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      elementHandlesStub.resolves([]);
+
+      // act
+      await repository.getPartNumbersAndPartTexts(getPartNumbersAndPartTextsParams);
+
+      // assert
+      ok(elementHandlesStub.calledOnceWith());
+    });
+
+    it("should handle [Failure] if [elementHandles] rejects", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      const err = new Error("test-err");
+      elementHandlesStub.rejects(err);
+      const expectedFailure = new ScraperFailure(SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE, err);
+
+      // act
+      const result = await repository.getPartNumbersAndPartTexts(getPartNumbersAndPartTextsParams);
+
+      // assert
+      ok(elementHandlesStub.calledOnceWith());
+      ok(mockLogger.info.calledWith("[ScraperRepository.getPartNumbersAndPartTexts] completed with a [Failure]."));
+      ok(mockLogger.warn.calledOnceWith(SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE));
+      ok(mockLogger.error.calledOnceWith(err));
+      deepEqual(result, new Left(expectedFailure));
+    });
+
+    it("should call [$(partNrSelector)] on each [partRow]", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      const node = stubInterface<any>();
+      const $stub = sinon.stub();
+      node.$ = $stub;
+      elementHandlesStub.resolves([
+        node,
+        node,
+      ]);
+
+      const inputElement = document.createElement("input");
+
+      $stub.resolves(inputElement);
+
+      // act
+      await repository.getPartNumbersAndPartTexts(getPartNumbersAndPartTextsParams);
+
+      // assert
+      ok(elementHandlesStub.calledOnceWith());
+      ok($stub.calledWith(Selectors.partNumberInp));
+      equal($stub.callCount, 2);
+    });
+
+    it("should call [getAttribute] with 'value' on input element(s) & [getAttribute('data-parttext')] on [partRowTr]", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      const node = stubInterface<any>();
+      const $stub = sinon.stub();
+      node.$ = $stub;
+      const partTextGetAttributeStub = sinon.stub();
+      node.getAttribute = partTextGetAttributeStub;
+      elementHandlesStub.resolves([
+        node,
+        node,
+        node,
+      ]);
+
+      const inputGetAttributeStub = sinon.stub();
+
+      const inputElement = document.createElement("input");
+      inputElement.getAttribute = inputGetAttributeStub;
+
+      $stub.resolves(inputElement);
+      inputGetAttributeStub.resolves("part-num");
+
+      // act
+      await repository.getPartNumbersAndPartTexts(getPartNumbersAndPartTextsParams);
+
+      // assert
+      ok(inputGetAttributeStub.calledWith("value"));
+      ok(partTextGetAttributeStub.calledWith('data-parttext'));
+      equal(partTextGetAttributeStub.callCount, 3);
+      equal(inputGetAttributeStub.callCount, 3);
+    });
+
+    it("should return [Failure] if scraping [getPartNumbersAndPartTextsFromPartRows] rejects", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      const err = new Error("test-err");
+      const node = stubInterface<any>();
+      const $stub = sinon.stub();
+      node.$ = $stub;
+      elementHandlesStub.resolves([
+        node,
+        node,
+        node,
+      ]);
+
+      const inputGetAttributeStub = sinon.stub();
+
+      const inputElement = document.createElement("input");
+      inputElement.getAttribute = inputGetAttributeStub;
+
+      $stub.resolves(inputElement);
+      inputGetAttributeStub.onCall(0).resolves("partNum");
+      inputGetAttributeStub.onCall(1).rejects(err);
+      inputGetAttributeStub.onCall(2).resolves("partNum");
+
+      const expectedFailure = new ScraperFailure(SCRAPER_GET_PART_NUMBERS_AND_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE, err);
+
+      // act
+      const result = await repository.getPartNumbersAndPartTexts(getPartNumbersAndPartTextsParams);
+
+      // assert
+      ok(inputGetAttributeStub.calledWith("value"));
+      ok(mockLogger.info.calledWith("[ScraperRepository.getPartNumbersAndPartTexts] completed with a [Failure]."));
+      ok(mockLogger.warn.calledOnceWith(SCRAPER_GET_PART_NUMBERS_AND_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE));
+      ok(mockLogger.error.calledOnceWith(err));
+      equal(inputGetAttributeStub.callCount, 2);
+      deepEqual(result, new Left(expectedFailure));
+    });
+
+    it("should return [{ partNumber:string; partText: string; }[]] if everything ran without an issue", async () => {
+      // arrange
+      pageLocatorStub.returns(mockLocator);
+      const node = stubInterface<any>();
+      const $stub = sinon.stub();
+      const partTextGetAttributeStub = sinon.stub();
+      node.$ = $stub;
+      node.getAttribute = partTextGetAttributeStub;
+      elementHandlesStub.resolves([
+        node,
+        node,
+        node,
+      ]);
+
+      const inputGetAttributeStub = sinon.stub();
+
+      const inputElement = document.createElement("input");
+
+      inputElement.getAttribute = inputGetAttributeStub;
+
+      partTextGetAttributeStub.onCall(0).resolves("part-text1");
+      partTextGetAttributeStub.onCall(1).resolves("part-text2");
+      partTextGetAttributeStub.onCall(2).resolves("part-text3");
+
+      $stub.resolves(inputElement);
+      inputGetAttributeStub.onCall(0).resolves("part-num1");
+      inputGetAttributeStub.onCall(1).resolves("part-num2");
+      inputGetAttributeStub.onCall(2).resolves("part-num3");
+
+      const expectedResult: {
+        partNumber: string;
+        partText: string;
+      }[] = [
+          {
+            partNumber: "part-num1",
+            partText: "part-text1",
+          },
+          {
+            partNumber: "part-num2",
+            partText: "part-text2",
+          },
+          {
+            partNumber: "part-num3",
+            partText: "part-text3",
+          },
+        ];
+
+      // act
+      const result = await repository.getPartNumbersAndPartTexts(getPartNumbersAndPartTextsParams);
 
       // assert
       deepEqual(result, new Right(expectedResult));
