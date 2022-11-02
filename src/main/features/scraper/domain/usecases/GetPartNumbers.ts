@@ -3,7 +3,7 @@ import BotController from '../../../../features/bot/presentation/controllers/Bot
 import { Failure } from '../../../../core/error/failures';
 import ScraperRepository from '../repositories/ScraperRepository';
 
-type GetPartNumbersParams = { botController: BotController, url: string };
+type GetPartNumbersParams = BotController;
 
 interface IGetPartNumbers {
   (params: GetPartNumbersParams): Promise<Either<Failure, string[]>>;

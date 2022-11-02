@@ -13,6 +13,12 @@ class Tokens {
   static savePartNumbersAsCsv = Symbol.for("usecase.savePartNumbersAsCsv");
   static scrapePartNumbers = Symbol.for("usecase.scrapePartNumbers");
   static setScraperConfig = Symbol.for("usecase.setScraperConfig");
+  static getPartNumbers = Symbol.for("usecase.getPartNumbers");
+  static getPartNumbersAndPartTexts = Symbol.for("usecase.getPartNumbersAndPartTexts");
+  static getPartTexts = Symbol.for("usecase.getPartTexts");
+  static getVehicleInfo = Symbol.for("usecase.getVehicleInfo");
+  static saveVehicleInfoWithPartsDataAsCsv = Symbol.for("usecase.saveVehicleInfoWithPartsDataAsCsv");
+  static scrapeVehicleInfoWithPartsData = Symbol.for("usecase.scrapeVehicleInfoWithPartsData");
   static logger = Symbol.for("core.logger");
   static log4js = Symbol.for("external.log4js");
   static firefox = Symbol.for("external.firefox");
