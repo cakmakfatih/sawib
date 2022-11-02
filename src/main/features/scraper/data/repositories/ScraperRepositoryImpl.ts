@@ -1,4 +1,7 @@
 import { Either, Left, Right } from '@typed-f/either';
+import fs from 'fs';
+import moment from 'moment';
+import path from 'path';
 import { Failure, ScraperFailure } from '../../../../core/error/failures';
 import { Page, Response, ElementHandle } from 'playwright-firefox';
 import ScraperRepository from '../../domain/repositories/ScraperRepository';
@@ -8,9 +11,6 @@ import Logger from '../../../../core/Logger';
 import { ScraperLocalDataSource } from '../datasources/ScraperLocalDataSource';
 import safePromise from '../../../../utils/safePromise';
 import ScraperConfig from '../../domain/entities/ScraperConfig';
-import fs from 'fs';
-import moment from 'moment';
-import path from 'path';
 import safeCall from '../../../../utils/safeCall';
 import { ILaunchBotController } from '../../../../features/bot/domain/usecases/LaunchBotController';
 import BotControllerImpl from '../../../../features/bot/presentation/controllers/BotController';
