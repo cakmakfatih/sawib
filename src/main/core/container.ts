@@ -27,6 +27,12 @@ import { IScrapePartNumbers, ScrapePartNumbers } from '../features/scraper/domai
 import { ISetScraperConfig, SetScraperConfig } from '../features/scraper/domain/usecases/SetScraperConfig';
 import { ILaunchBotController, LaunchBotController } from '../features/bot/domain/usecases/LaunchBotController';
 import { SENTRY_DSN_URL } from '../bin/config';
+import { GetPartNumbers, IGetPartNumbers } from '../features/scraper/domain/usecases/GetPartNumbers';
+import { GetPartNumbersAndPartTexts, IGetPartNumbersAndPartTexts } from '../features/scraper/domain/usecases/GetPartNumbersAndPartTexts';
+import { GetPartTexts, IGetPartTexts } from '../features/scraper/domain/usecases/GetPartTexts';
+import { GetVehicleInfo, IGetVehicleInfo } from '../features/scraper/domain/usecases/GetVehicleInfo';
+import { ISaveVehicleInfoWithPartsDataAsCsv, SaveVehicleInfoWithPartsDataAsCsv } from '../features/scraper/domain/usecases/SaveVehicleInfoWithPartsDataAsCsv';
+import { IScrapeVehicleInfoWithPartsData, ScrapeVehicleInfoWithPartsData } from '../features/scraper/domain/usecases/ScrapeVehicleInfoWithPartsData';
 
 export function initSentry() {
   Sentry.init({
@@ -86,8 +92,20 @@ export function initScraper() {
   }, { lifecycle: Lifecycle.Singleton });
 
   //! usecases
+  container.register<IGetPartNumbers>(Tokens.getPartNumbers, {
+    useValue: bindDependencies(Tokens.scraperRepository, GetPartNumbers),
+  });
+  container.register<IGetPartNumbersAndPartTexts>(Tokens.getPartNumbersAndPartTexts, {
+    useValue: bindDependencies(Tokens.scraperRepository, GetPartNumbersAndPartTexts),
+  });
+  container.register<IGetPartTexts>(Tokens.getPartTexts, {
+    useValue: bindDependencies(Tokens.scraperRepository, GetPartTexts),
+  });
   container.register<IGetScraperConfig>(Tokens.getScraperConfig, {
     useValue: bindDependencies(Tokens.scraperRepository, GetScraperConfig),
+  });
+  container.register<IGetVehicleInfo>(Tokens.getVehicleInfo, {
+    useValue: bindDependencies(Tokens.scraperRepository, GetVehicleInfo),
   });
   container.register<ILoginToPartsCheck>(Tokens.loginToPartsCheck, {
     useValue: bindDependencies(Tokens.scraperRepository, LoginToPartsCheck),
@@ -95,8 +113,14 @@ export function initScraper() {
   container.register<ISavePartNumbersAsCsv>(Tokens.savePartNumbersAsCsv, {
     useValue: bindDependencies(Tokens.scraperRepository, SavePartNumbersAsCsv),
   });
+  container.register<ISaveVehicleInfoWithPartsDataAsCsv>(Tokens.saveVehicleInfoWithPartsDataAsCsv, {
+    useValue: bindDependencies(Tokens.scraperRepository, SaveVehicleInfoWithPartsDataAsCsv),
+  });
   container.register<IScrapePartNumbers>(Tokens.scrapePartNumbers, {
     useValue: bindDependencies(Tokens.scraperRepository, ScrapePartNumbers),
+  });
+  container.register<IScrapeVehicleInfoWithPartsData>(Tokens.scrapeVehicleInfoWithPartsData, {
+    useValue: bindDependencies(Tokens.scraperRepository, ScrapeVehicleInfoWithPartsData),
   });
   container.register<ISetScraperConfig>(Tokens.setScraperConfig, {
     useValue: bindDependencies(Tokens.scraperRepository, SetScraperConfig),
