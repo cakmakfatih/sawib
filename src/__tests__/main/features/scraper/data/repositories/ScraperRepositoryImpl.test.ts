@@ -19,6 +19,7 @@ import VehicleInfo from 'main/features/scraper/domain/entities/VehicleInfo';
 import { GetPartTextsParams } from 'main/features/scraper/domain/usecases/GetPartTexts';
 import { GetPartNumbersAndPartTextsParams } from 'main/features/scraper/domain/usecases/GetPartNumbersAndPartTexts';
 import { SaveVehicleInfoWithPartsDataAsCsvParams } from 'main/features/scraper/domain/usecases/SaveVehicleInfoWithPartsDataAsCsv';
+import { ScrapeVehicleInfoWithPartsDataParams } from 'main/features/scraper/domain/usecases/ScrapeVehicleInfoWithPartsData';
 
 const document = new jsdom.JSDOM().window.document;
 
@@ -810,9 +811,6 @@ describe("ScraperRepository", () => {
       const params = "test-url";
       mockLaunchBotController.resolves(new Right(mockBotController));
       loginToPartsCheckStub.resolves(new Right(true));
-      pageGoToStub.resolves();
-      pageLocatorStub.returns(mockLocator);
-      elementHandlesStub.resolves([]);
 
       // act
       await repository.scrapePartNumbers(params);
@@ -916,7 +914,7 @@ describe("ScraperRepository", () => {
       ok(savePartNumbersAsCsvStub.calledOnceWith(getPartNumbersResult));
     });
 
-    it("should log correctly and return a [Failure] if [savePartNumbers] throws", async () => {
+    it("should log correctly and return a [Failure] if [savePartNumbers] fails", async () => {
       // arrange
       const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
       mockLaunchBotController.resolves(new Right(mockBotController));
@@ -958,6 +956,296 @@ describe("ScraperRepository", () => {
       savePartNumbersAsCsvStub.restore();
       getPartNumbersStub.restore();
       loginToPartsCheckStub.restore();
+    });
+  });
+
+  describe("scrapeVehicleInfoWithPartsDataResult", () => {
+    let getVehicleInfoStub: sinon.SinonStub;
+    let getPartNumbersAndPartTextsStub: sinon.SinonStub;
+    let loginToPartsCheckStub: sinon.SinonStub;
+    let saveVehicleInfoWithPartsDataAsCsvStub: sinon.SinonStub;
+    let mockPartNumbersAndPartTexts: { partText: string; partNumber: string; }[];
+    let mockVehicleInfo: VehicleInfo;
+
+    beforeAll(() => {
+      getVehicleInfoStub = sinon.stub(repository, "getVehicleInfo");
+      getPartNumbersAndPartTextsStub = sinon.stub(repository, "getPartNumbersAndPartTexts");
+      loginToPartsCheckStub = sinon.stub(repository, "loginToPartsCheck");
+      saveVehicleInfoWithPartsDataAsCsvStub = sinon.stub(repository, "saveVehicleInfoWithPartsDataAsCsv");
+      mockPartNumbersAndPartTexts = stubInterface<{ partText: string; partNumber: string; }[]>();
+      mockVehicleInfo = stubInterface<VehicleInfo>();
+    });
+
+    beforeEach(() => {
+      mockLogger.info.resetHistory();
+      mockLogger.warn.resetHistory();
+      mockLogger.error.resetHistory();
+      getVehicleInfoStub.resetHistory();
+      getPartNumbersAndPartTextsStub.resetHistory();
+      loginToPartsCheckStub.resetHistory();
+      saveVehicleInfoWithPartsDataAsCsvStub.resetHistory();
+      closeBrowserSpy.resetHistory();
+      closeContextSpy.resetHistory();
+      loginToPartsCheckStub.resetHistory();
+      pageGoToStub.resetHistory();
+    });
+
+    it("should call [Logger.info] correctly", async () => {
+      // arrange
+      const params: ScrapeVehicleInfoWithPartsDataParams = "test-url";
+      mockLaunchBotController.resolves(new Right(mockBotController));
+      loginToPartsCheckStub.resolves(new Right(true));
+      getPartNumbersAndPartTextsStub.resolves(new Right(mockPartNumbersAndPartTexts));
+      getVehicleInfoStub.resolves(new Right(mockVehicleInfo));
+      saveVehicleInfoWithPartsDataAsCsvStub.returns(new Right(true));
+
+      // act
+      await repository.scrapeVehicleInfoWithPartsData(params);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapeVehicleInfoWithPartsData] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapeVehicleInfoWithPartsData] completed."));
+      equal(mockLogger.info.callCount, 2);
+    });
+
+    it("should return [Failure] if [launchBotController] fails", async () => {
+      // arrange
+      const params: ScrapeVehicleInfoWithPartsDataParams = "test-url";
+      const err = new Error("test-err");
+      const expectedFailure = new BrowserFailure(SCRAPER_LAUNCH_BOT_CONTROLLER_WARNING_MESSAGE, err);
+      mockLaunchBotController.resolves(new Left(expectedFailure));
+
+      // act
+      const result = await repository.scrapeVehicleInfoWithPartsData(params);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapeVehicleInfoWithPartsData] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapeVehicleInfoWithPartsData] completed with a [Failure]."));
+      ok(mockLogger.warn.calledOnceWith(expectedFailure.message));
+      deepEqual(result, new Left(expectedFailure));
+    });
+
+    it("should call [loginToPartsCheck] with correct params", async () => {
+      // arrange
+      const params: ScrapeVehicleInfoWithPartsDataParams = "test-url";
+      mockLaunchBotController.resolves(new Right(mockBotController));
+      loginToPartsCheckStub.resolves(new Right(true));
+      getPartNumbersAndPartTextsStub.resolves(new Right(mockPartNumbersAndPartTexts));
+      getVehicleInfoStub.resolves(new Right(mockVehicleInfo));
+      saveVehicleInfoWithPartsDataAsCsvStub.returns(new Right(true));
+
+      // act
+      await repository.scrapeVehicleInfoWithPartsData(params);
+
+      // assert
+      ok(loginToPartsCheckStub.calledOnceWith(mockBotController.pages[0]));
+    });
+
+    it("should return [Failure] if [loginToPartsCheck] fails", async () => {
+      // arrange
+      const params: ScrapeVehicleInfoWithPartsDataParams = "test-url";
+      const err = new Error("scraper err");
+      const scraperFailure = new ScraperFailure("scraper failure", err);
+      mockLaunchBotController.resolves(new Right(mockBotController));
+      loginToPartsCheckStub.resolves(new Left(scraperFailure));
+
+      // act
+      const result = await repository.scrapeVehicleInfoWithPartsData(params);
+
+      // assert
+      deepEqual(result, new Left(scraperFailure));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapeVehicleInfoWithPartsData] completed with a [Failure]."));
+      ok(mockLogger.warn.calledOnceWith(SCRAPER_BOT_LOGIN_TO_PARTS_CHECK_FAILURE_MESSAGE));
+      ok(closeContextSpy.calledOnceWith());
+      ok(closeBrowserSpy.calledOnceWith());
+    });
+
+    it("should call [goto] with correct URL to Quotes using one of the [controller.pages]", async () => {
+      // arrange
+      const params = "test-url";
+      mockLaunchBotController.resolves(new Right(mockBotController));
+      loginToPartsCheckStub.resolves(new Right(true));
+      pageGoToStub.resolves();
+      getPartNumbersAndPartTextsStub.resolves(new Right(mockPartNumbersAndPartTexts));
+      getVehicleInfoStub.resolves(new Right(mockVehicleInfo));
+      saveVehicleInfoWithPartsDataAsCsvStub.returns(new Right(true));
+
+      // act
+      await repository.scrapeVehicleInfoWithPartsData(params);
+
+      // assert
+      ok(pageGoToStub.calledOnceWith(params));
+    });
+
+    it("should return [ScraperFailure] if navigation to the [page.goto] rejects", async () => {
+      // arrange
+      const params = "test-url";
+      mockLaunchBotController.resolves(new Right(mockBotController));
+      loginToPartsCheckStub.resolves(new Right(true));
+      const err = new Error("err");
+      pageGoToStub.rejects(err);
+
+      const failure = new ScraperFailure(SCRAPER_PAGE_NAVIGATION_FAILURE_MESSAGE, err);
+
+      // act
+      const result = await repository.scrapeVehicleInfoWithPartsData(params);
+
+      // assert
+      ok(pageGoToStub.calledOnceWith(params));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapeVehicleInfoWithPartsData] completed with a [Failure]."));
+      ok(mockLogger.warn.calledWith(failure.message));
+      ok(mockLogger.error.calledWith(err));
+      ok(closeContextSpy.calledOnceWith());
+      ok(closeBrowserSpy.calledOnceWith());
+      deepEqual(result, new Left(failure));
+    });
+
+    it("should call [getPartNumbersAndPartTexts] with correct params", async () => {
+      // arrange
+      const params: ScrapeVehicleInfoWithPartsDataParams = "test-url";
+      mockLaunchBotController.resolves(new Right(mockBotController));
+      loginToPartsCheckStub.resolves(new Right(true));
+      getPartNumbersAndPartTextsStub.resolves(new Right(mockPartNumbersAndPartTexts));
+      getVehicleInfoStub.resolves(new Right(mockVehicleInfo));
+      pageGoToStub.resolves();
+      const expectedGetPartNumbersParams = mockBotController;
+      saveVehicleInfoWithPartsDataAsCsvStub.returns(new Right(true));
+
+      // act
+      await repository.scrapeVehicleInfoWithPartsData(params);
+
+      // assert
+      ok(getPartNumbersAndPartTextsStub.calledOnceWith(expectedGetPartNumbersParams));
+    });
+
+    it("should call [getVehicleInfo] with correct params", async () => {
+      // arrange
+      const params: ScrapeVehicleInfoWithPartsDataParams = "test-url";
+      mockLaunchBotController.resolves(new Right(mockBotController));
+      loginToPartsCheckStub.resolves(new Right(true));
+      getPartNumbersAndPartTextsStub.resolves(new Right(mockPartNumbersAndPartTexts));
+      getVehicleInfoStub.resolves(new Right(mockVehicleInfo));
+      pageGoToStub.resolves();
+      const expectedGetVehicleInfoParams = mockBotController;
+      saveVehicleInfoWithPartsDataAsCsvStub.returns(new Right(true));
+
+      // act
+      await repository.scrapeVehicleInfoWithPartsData(params);
+
+      // assert
+      ok(getVehicleInfoStub.calledOnceWith(expectedGetVehicleInfoParams));
+    });
+
+    it("should return [Failure] if [getPartNumbersAndPartTexts] fails", async () => {
+      // arrange
+      const params: ScrapeVehicleInfoWithPartsDataParams = "test-url";
+      mockLaunchBotController.resolves(new Right(mockBotController));
+      loginToPartsCheckStub.resolves(new Right(true));
+      const err = new Error("test-err");
+      const expectedFailure = new ScraperFailure("test-failure", err);
+      getPartNumbersAndPartTextsStub.resolves(new Left(expectedFailure));
+      pageGoToStub.resolves();
+
+      // act
+      const result = await repository.scrapeVehicleInfoWithPartsData(params);
+
+      // assert
+      ok(pageGoToStub.calledOnceWith(params));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapeVehicleInfoWithPartsData] completed with a [Failure]."));
+      ok(getVehicleInfoStub.notCalled);
+      ok(closeContextSpy.calledOnceWith());
+      ok(closeBrowserSpy.calledOnceWith());
+      deepEqual(result, new Left(expectedFailure));
+    });
+
+    it("should return [Failure] if [getVehicleInfo] fails", async () => {
+      // arrange
+      const params: ScrapeVehicleInfoWithPartsDataParams = "test-url";
+      mockLaunchBotController.resolves(new Right(mockBotController));
+      loginToPartsCheckStub.resolves(new Right(true));
+      const err = new Error("test-err");
+      const expectedFailure = new ScraperFailure("test-failure", err);
+      getVehicleInfoStub.resolves(new Left(expectedFailure));
+      pageGoToStub.resolves();
+
+      // act
+      const result = await repository.scrapeVehicleInfoWithPartsData(params);
+
+      // assert
+      ok(pageGoToStub.calledOnceWith(params));
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapeVehicleInfoWithPartsData] completed with a [Failure]."));
+      ok(closeContextSpy.calledOnceWith());
+      ok(closeBrowserSpy.calledOnceWith());
+      deepEqual(result, new Left(expectedFailure));
+    });
+
+    it("should call [saveVehicleInfoWithPartsDataAsCsv] with correct params", async () => {
+      // arrange
+      const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
+      mockLaunchBotController.resolves(new Right(mockBotController));
+      loginToPartsCheckStub.resolves(new Right(true));
+      pageGoToStub.resolves();
+      getPartNumbersAndPartTextsStub.resolves(new Right(mockPartNumbersAndPartTexts));
+      getVehicleInfoStub.resolves(new Right(mockVehicleInfo));
+      const expectedSaveParams: SaveVehicleInfoWithPartsDataAsCsvParams = {
+        partNumbersAndTexts: mockPartNumbersAndPartTexts,
+        vehicleInfo: mockVehicleInfo,
+      };
+      saveVehicleInfoWithPartsDataAsCsvStub.returns(new Right(true));
+
+      // act
+      await repository.scrapeVehicleInfoWithPartsData(urlToScrape);
+
+      // assert
+      ok(saveVehicleInfoWithPartsDataAsCsvStub.calledOnceWith(expectedSaveParams));
+    });
+
+    it("should log correctly and return a [Failure] if [saveVehicleInfoWithPartsDataAsCsv] fails", async () => {
+      // arrange
+      const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
+      mockLaunchBotController.resolves(new Right(mockBotController));
+      loginToPartsCheckStub.resolves(new Right(true));
+      pageGoToStub.resolves();
+      getPartNumbersAndPartTextsStub.resolves(new Right(mockPartNumbersAndPartTexts));
+      getVehicleInfoStub.resolves(new Right(mockVehicleInfo));
+      const saveVehicleInfoWithPartsDataAsCsvFailure = new ScraperFailure("test-failure");
+      saveVehicleInfoWithPartsDataAsCsvStub.returns(new Left(saveVehicleInfoWithPartsDataAsCsvFailure));
+
+      // act
+      const result = await repository.scrapeVehicleInfoWithPartsData(urlToScrape);
+
+      // assert
+      ok(mockLogger.info.calledWith("[ScraperRepository.scrapeVehicleInfoWithPartsData] completed with a [Failure]."));
+      ok(closeContextSpy.calledOnceWith());
+      ok(closeBrowserSpy.calledOnceWith());
+      deepEqual(result, new Left(saveVehicleInfoWithPartsDataAsCsvFailure));
+    });
+
+    it("should return [Right<true>] if everything ran without an issue and dispose browser", async () => {
+      // arrange
+      const urlToScrape = "http://v1.partscheck.com.au/appV2/price-quote.php?draftID=9725056&rURL=quotes-incoming.php";
+      mockLaunchBotController.resolves(new Right(mockBotController));
+      loginToPartsCheckStub.resolves(new Right(true));
+      pageGoToStub.resolves();
+      getPartNumbersAndPartTextsStub.resolves(new Right(mockPartNumbersAndPartTexts));
+      getVehicleInfoStub.resolves(new Right(mockVehicleInfo));
+      saveVehicleInfoWithPartsDataAsCsvStub.returns(new Right(true));
+      const expectedResult = true;
+
+      // act
+      const result = await repository.scrapeVehicleInfoWithPartsData(urlToScrape);
+
+      // assert
+      ok(closeContextSpy.calledOnceWith());
+      ok(closeBrowserSpy.calledOnceWith());
+      deepEqual(result, new Right(expectedResult));
+    });
+
+    afterAll(() => {
+      getVehicleInfoStub.restore();
+      getPartNumbersAndPartTextsStub.restore();
+      loginToPartsCheckStub.restore();
+      saveVehicleInfoWithPartsDataAsCsvStub.restore();
     });
   });
 
