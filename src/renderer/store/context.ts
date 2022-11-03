@@ -5,6 +5,11 @@ import { ipcRenderer } from "electron";
 
 const scraperConfig: ScraperConfig = ipcRenderer.sendSync('usecase:getScraperConfig');
 
+const scrapingMethods: { [key: string]: string; } = {
+  scrapePartsData: 'SCRAPE_PARTS_DATA',
+  scrapeVehicleInfoWithPartsData: 'SCRAPE_VEHICLE_INFO_WITH_PARTS_DATA',
+};
+
 type AppStateType = {
   scraperConfig?: ScraperConfig;
   partsCheckUsername: string;
@@ -12,6 +17,7 @@ type AppStateType = {
   scraperSavePath: string;
   quoteUrl: string;
   isScraping: boolean;
+  scrapingMethod: string;
 };
 
 const appInitialState: AppStateType = {
@@ -21,6 +27,7 @@ const appInitialState: AppStateType = {
   scraperSavePath: scraperConfig?.savePath ?? "",
   quoteUrl: "",
   isScraping: false,
+  scrapingMethod: scrapingMethods.scrapePartsData,
 };
 
 const AppContext = createContext<{
@@ -32,4 +39,4 @@ const AppContext = createContext<{
 });
 
 
-export { AppContext, AppStateType, appInitialState };
+export { AppContext, AppStateType, appInitialState, scrapingMethods };

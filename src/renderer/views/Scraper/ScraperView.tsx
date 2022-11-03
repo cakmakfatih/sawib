@@ -3,12 +3,12 @@ import { ipcRenderer } from "electron";
 import "./ScraperView.css";
 import { Link } from "react-router-dom";
 import { Store } from "react-notifications-component";
-import { AppContext } from "../../store/context";
+import { AppContext, scrapingMethods } from "../../store/context";
 import { Types } from "../../store/reducers";
 
 function ScraperView() {
   const { state, dispatch } = useContext(AppContext);
-  const { scraperConfig, isScraping, quoteUrl } = state;
+  const { scraperConfig, isScraping, quoteUrl, scrapingMethod } = state;
 
   const scrape = async () => {
     if (quoteUrl) {
@@ -17,8 +17,17 @@ function ScraperView() {
         payload: true,
       });
 
+      let usecase: string;
+
+      if (scrapingMethod === scrapingMethods.scrapePartsData)
+        usecase = "usecase:scrapePartNumbers";
+      else if (
+        scrapingMethod === scrapingMethods.scrapeVehicleInfoWithPartsData
+      )
+        usecase = "usecase:scrapeVehicleInfoWithPartsData";
+
       ipcRenderer
-        .invoke("usecase:scrapePartNumbers", quoteUrl)
+        .invoke(usecase!, quoteUrl)
         .then((res) => {
           if (res)
             Store.addNotification({
@@ -109,8 +118,23 @@ function ScraperView() {
       <section className="scraper-wrapper">
         <div className="inp-container">
           <label htmlFor="scrapeOperation">Operation</label>
-          <select id="scrapeOperation" className="inp-default select-default">
-            <option>Scrape Part Numbers</option>
+          <select
+            onChange={(e) =>
+              dispatch({
+                type: Types.setScrapingMethod,
+                payload: e.target.value,
+              })
+            }
+            id="scrapeOperation"
+            value={scrapingMethod}
+            className="inp-default select-default"
+          >
+            <option value={scrapingMethods.scrapePartsData}>
+              Scrape Part Numbers
+            </option>
+            <option value={scrapingMethods.scrapeVehicleInfoWithPartsData}>
+              Scrape Vehicle Info With Parts Data
+            </option>
           </select>
         </div>
         <div className="inp-container">

@@ -591,7 +591,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
     const scraperConfig = scraperConfigOrFailure.value;
 
-    const fileName = `${moment().utc().format("YYYY-MM-DD HH-MM-SS").toString()}--part_numbers.csv`;
+    const fileName = `${moment().utc().format("YYYY-MM-DD HH-MM-ss").toString()}--part_numbers.csv`;
     const pathToSave = path.join(scraperConfig.savePath, fileName);
 
     partNumbers = partNumbers.map((i) => `"${i.replace(/-| /g, "")}"`);
@@ -629,7 +629,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
     const scraperConfig = scraperConfigOrFailure.value;
 
-    const fileName = `${moment().utc().format("YYYY-MM-DD HH-MM-SS").toString()}--vehicle_info_with_parts_data.csv`;
+    const fileName = `${moment().utc().format("YYYY-MM-DD HH-MM-ss").toString()}--vehicle_info_with_parts_data.csv`;
     const pathToSave = path.join(scraperConfig.savePath, fileName);
 
     const csvData = this.parseVehicleInfoWithPartsDataToCsv({ partNumbersAndTexts, vehicleInfo });

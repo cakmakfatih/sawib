@@ -19,6 +19,7 @@ export enum Types {
   setScraperConfig = 'SET_SCRAPER_CONFIG',
   setQuoteUrl = 'SET_QUOTE_URL',
   setIsScraping = 'SET_IS_SCRAPING',
+  setScrapingMethod = 'SET_SCRAPING_METHOD',
 }
 
 type AppPayload = {
@@ -28,6 +29,7 @@ type AppPayload = {
   [Types.setScraperConfig]: ScraperConfig;
   [Types.setQuoteUrl]: string;
   [Types.setIsScraping]: boolean;
+  [Types.setScrapingMethod]: string;
 };
 
 export type AppActions = ActionMap<AppPayload>[keyof ActionMap<AppPayload>];
@@ -63,6 +65,11 @@ function appReducer(state: AppStateType, action: AppActions): AppStateType {
       return {
         ...state,
         quoteUrl: action.payload,
+      };
+    case (Types.setScrapingMethod):
+      return {
+        ...state,
+        scrapingMethod: action.payload,
       };
     default:
       return state;

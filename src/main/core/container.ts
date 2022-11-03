@@ -142,7 +142,7 @@ export function initExternal() {
   const logDir = path.resolve("logs");
   const logPath = path.resolve(
     logDir,
-    `${moment().utc().format("YYYY-MM-DD HH-MM-SS").toString()}.log`
+    `${moment().utc().format("YYYY-MM-DD HH-MM-ss")}.log`
   );
 
   log4js.configure({

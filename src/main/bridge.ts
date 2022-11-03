@@ -4,6 +4,7 @@ import Tokens from './bin/Tokens';
 import ScraperConfig from './features/scraper/domain/entities/ScraperConfig';
 import { IGetScraperConfig } from './features/scraper/domain/usecases/GetScraperConfig';
 import { IScrapePartNumbers } from './features/scraper/domain/usecases/ScrapePartNumbers';
+import { IScrapeVehicleInfoWithPartsData } from './features/scraper/domain/usecases/ScrapeVehicleInfoWithPartsData';
 import { ISetScraperConfig } from './features/scraper/domain/usecases/SetScraperConfig';
 
 abstract class Bridge {
@@ -11,6 +12,7 @@ abstract class Bridge {
     const getScraperConfig: IGetScraperConfig = container.resolve<IGetScraperConfig>(Tokens.getScraperConfig);
     const setScraperConfig: ISetScraperConfig = container.resolve<ISetScraperConfig>(Tokens.setScraperConfig);
     const scrapePartNumbers: IScrapePartNumbers = container.resolve<IScrapePartNumbers>(Tokens.scrapePartNumbers);
+    const scrapeVehicleInfoWithPartsData: IScrapeVehicleInfoWithPartsData = container.resolve<IScrapeVehicleInfoWithPartsData>(Tokens.scrapeVehicleInfoWithPartsData);
 
     ipcMain.handle("dialog:openDirectory", async (_) => {
       const { canceled, filePaths } = await dialog.showOpenDialog({
@@ -50,6 +52,12 @@ abstract class Bridge {
 
     ipcMain.handle("usecase:scrapePartNumbers", async (_, url) => {
       const result = await scrapePartNumbers(url);
+
+      return !result.isLeft();
+    });
+
+    ipcMain.handle("usecase:scrapeVehicleInfoWithPartsData", async (_, url) => {
+      const result = await scrapeVehicleInfoWithPartsData(url);
 
       return !result.isLeft();
     });
