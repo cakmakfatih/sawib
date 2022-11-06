@@ -388,8 +388,8 @@ describe("ScraperRepository", () => {
       await repository.getPartTexts(getPartTextsParams);
 
       // assert
-      ok(mockLogger.info.calledWith("[ScraperRepository.getPartTextsParams] started."));
-      ok(mockLogger.info.calledWith("[ScraperRepository.getPartTextsParams] completed."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.getPartTexts] started."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.getPartTexts] completed."));
       equal(mockLogger.info.callCount, 2);
     });
 
@@ -429,7 +429,7 @@ describe("ScraperRepository", () => {
 
       // assert
       ok(elementHandlesStub.calledOnceWith());
-      ok(mockLogger.info.calledWith("[ScraperRepository.getPartTextsParams] completed with a [Failure]."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.getPartTexts] completed with a [Failure]."));
       ok(mockLogger.warn.calledOnceWith(SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE));
       ok(mockLogger.error.calledOnceWith(err));
       deepEqual(result, new Left(expectedFailure));
@@ -459,7 +459,7 @@ describe("ScraperRepository", () => {
 
       // assert
       ok(elementHandlesStub.calledOnceWith());
-      ok(mockLogger.info.calledWith("[ScraperRepository.getPartTextsParams] completed with a [Failure]."));
+      ok(mockLogger.info.calledWith("[ScraperRepository.getPartTexts] completed with a [Failure]."));
       ok(mockLogger.warn.calledOnceWith(SCRAPER_GET_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE));
       ok(mockLogger.error.calledOnceWith(err));
       deepEqual(result, new Left(expectedFailure));

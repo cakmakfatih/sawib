@@ -115,7 +115,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
   }
 
   async getPartTexts(botController: BotControllerImpl): Promise<Either<Failure, string[]>> {
-    this.logger.info("[ScraperRepository.getPartTextsParams] started.");
+    this.logger.info("[ScraperRepository.getPartTexts] started.");
 
     const page = botController.pages[0];
 
@@ -126,7 +126,7 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
       this.logger.error(partRowsErr);
       this.logger.warn(SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE);
-      this.logger.info("[ScraperRepository.getPartTextsParams] completed with a [Failure].");
+      this.logger.info("[ScraperRepository.getPartTexts] completed with a [Failure].");
 
       return new Left(new ScraperFailure(SCRAPER_GET_PART_ROWS_FAILURE_MESSAGE, partRowsErr));
     }
@@ -140,14 +140,14 @@ class ScraperRepositoryImpl implements ScraperRepository {
 
       this.logger.error(partTextsErr);
       this.logger.warn(SCRAPER_GET_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE);
-      this.logger.info("[ScraperRepository.getPartTextsParams] completed with a [Failure].");
+      this.logger.info("[ScraperRepository.getPartTexts] completed with a [Failure].");
 
       return new Left(new ScraperFailure(SCRAPER_GET_PART_TEXTS_FROM_PART_ROWS_FAILURE_MESSAGE, partTextsErr));
     }
 
     const partTexts = partTextsOrError.value;
 
-    this.logger.info("[ScraperRepository.getPartTextsParams] completed.");
+    this.logger.info("[ScraperRepository.getPartTexts] completed.");
 
     return new Right(partTexts);
   }
